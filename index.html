@@ -2,259 +2,216 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Shopify Compliance Analyzer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shopify Compliance Analyzer | Admin Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
+        :root {
+            --primary: #5c6ac4;
+            --secondary: #202e78;
+            --danger: #de3618;
+            --warning: #ffea8a;
+            --success: #50b83c;
         }
         
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            overflow-x: hidden;
-            background: #f8fafc;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: #f9fafb;
         }
         
-        /* Fix for mobile inputs */
-        input, select, textarea, button {
-            font-size: 16px !important;
-            -webkit-appearance: none;
-            -moz-appearance: none;
-            appearance: none;
-        }
-        
-        /* Prevent zoom on iOS */
-        @media screen and (max-width: 768px) {
-            input, select, textarea {
-                font-size: 16px !important;
-            }
-        }
-        
-        /* Mobile menu styles */
-        .mobile-menu {
-            transform: translateX(-100%);
-            transition: transform 0.3s ease;
-        }
-        
-        .mobile-menu.active {
-            transform: translateX(0);
-        }
-        
-        .overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.5);
-            z-index: 40;
-        }
-        
-        .overlay.active {
-            display: block;
-        }
-        
-        /* Settings modal */
-        .settings-modal {
-            transform: scale(0.9);
-            opacity: 0;
+        .sidebar {
             transition: all 0.3s ease;
-            z-index: 60;
         }
         
-        .settings-modal.active {
-            transform: scale(1);
-            opacity: 1;
+        .analysis-card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
         
-        /* Custom scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
+        .analysis-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
         }
         
-        ::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 4px;
+        .severity-high {
+            border-left: 4px solid var(--danger);
         }
         
-        ::-webkit-scrollbar-thumb {
-            background: #888;
-            border-radius: 4px;
+        .severity-medium {
+            border-left: 4px solid var(--warning);
         }
         
-        ::-webkit-scrollbar-thumb:hover {
-            background: #555;
+        .severity-low {
+            border-left: 4px solid #a2a5b9;
         }
         
-        /* Fix for checkbox sizing */
-        input[type="checkbox"] {
-            width: 20px;
-            height: 20px;
-            cursor: pointer;
+        .btn-primary {
+            background-color: var(--primary);
         }
         
-        /* Make buttons more touch-friendly */
-        button, 
-        [role="button"],
-        a[role="button"] {
-            min-height: 44px;
-            min-width: 44px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
+        .btn-primary:hover {
+            background-color: var(--secondary);
+        }
+        
+        .risk-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 6px;
+        }
+        
+        .risk-high {
+            background-color: var(--danger);
+        }
+        
+        .risk-medium {
+            background-color: var(--warning);
+        }
+        
+        .risk-low {
+            background-color: #a2a5b9;
+        }
+        
+        .tab-active {
+            border-bottom: 3px solid var(--primary);
+            color: var(--primary);
+        }
+        
+        .compliance-score {
+            font-size: 2.5rem;
+            font-weight: bold;
+        }
+        
+        .score-high {
+            color: var(--success);
+        }
+        
+        .score-medium {
+            color: var(--warning);
+        }
+        
+        .score-low {
+            color: var(--danger);
+        }
+        
+        .no-issues {
+            background: linear-gradient(135deg, #f0fff4 0%, #dcfce7 100%);
+            border-left: 4px solid var(--success);
+        }
+        
+        /* Mobile responsive improvements */
+        @media (max-width: 768px) {
+            .compliance-score {
+                font-size: 2rem;
+            }
+            
+            .grid-cols-1 {
+                grid-template-columns: 1fr;
+            }
+            
+            .grid-cols-2 {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            .space-y-4 > * + * {
+                margin-top: 1rem;
+            }
+            
+            .p-6 {
+                padding: 1rem;
+            }
+            
+            .text-3xl {
+                font-size: 1.875rem;
+            }
+            
+            .w-16 {
+                width: 3rem;
+                height: 3rem;
+            }
         }
     </style>
 </head>
-<body class="bg-gray-50">
-    <!-- Mobile Overlay -->
-    <div id="mobileOverlay" class="overlay" onclick="toggleMobileMenu()"></div>
-    
-    <!-- Mobile Sidebar -->
-    <div id="mobileMenu" class="mobile-menu fixed inset-y-0 left-0 w-64 bg-gray-900 text-white z-50">
+<body class="flex h-screen overflow-hidden">
+    <!-- Sidebar -->
+    <div class="sidebar bg-gray-900 text-white w-64 flex-shrink-0 hidden md:flex flex-col">
         <div class="p-4 border-b border-gray-800">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-3">
-                    <div class="w-8 h-8 rounded bg-indigo-500 flex items-center justify-center">
-                        <i class="fas fa-chart-bar"></i>
-                    </div>
-                    <span class="text-lg font-bold">Analytics Board</span>
-                </div>
-                <button onclick="toggleMobileMenu()" class="text-gray-400 hover:text-white">
-                    <i class="fas fa-times text-xl"></i>
-                </button>
+            <div class="flex items-center space-x-3">
+                <img src="https://uploads.onecompiler.io/43rwrkk4c/43ythhb8z/Shopify%20Bag%20(1).png" style="height:30px; width:30px;">
+                <span class="text-xl font-bold">Analytics Board</span>
             </div>
         </div>
-        
         <div class="p-4 border-b border-gray-800">
             <div class="flex items-center space-x-3">
                 <div class="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center">
-                    <span id="mobileAvatar" class="text-white font-medium">HB</span>
+                    <span class="text-white font-medium">HB</span>
                 </div>
                 <div>
-                    <div id="mobileUserName" class="font-medium">Habeeb</div>
+                    <div class="font-medium">Habeeb</div>
                     <div class="text-xs text-gray-400">Admin</div>
                 </div>
             </div>
         </div>
-        
         <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
-            <a href="#" class="flex items-center py-3 px-3 rounded bg-gray-800 text-white">
-                <i class="fas fa-tachometer-alt mr-3"></i> Dashboard
+            <a href="#" class="block py-2 px-3 rounded bg-gray-800 text-white">
+                <i class="fas fa-tachometer-alt mr-2"></i> Dashboard
             </a>
-            <a href="#" class="flex items-center py-3 px-3 rounded text-gray-400 hover:bg-gray-800 hover:text-white">
-                <i class="fas fa-store mr-3"></i> Stores
+            <a href="#" class="block py-2 px-3 rounded text-gray-400 hover:bg-gray-800 hover:text-white">
+                <i class="fas fa-store mr-2"></i> Stores
             </a>
-            <a href="#" class="flex items-center py-3 px-3 rounded text-gray-400 hover:bg-gray-800 hover:text-white">
-                <i class="fas fa-shield-alt mr-3"></i> Compliance
+            <a href="#" class="block py-2 px-3 rounded text-gray-400 hover:bg-gray-800 hover:text-white">
+                <i class="fas fa-shield-alt mr-2"></i> Compliance
             </a>
-            <a href="#" class="flex items-center py-3 px-3 rounded text-gray-400 hover:bg-gray-800 hover:text-white">
-                <i class="fas fa-chart-line mr-3"></i> Analytics
+            <a href="#" class="block py-2 px-3 rounded text-gray-400 hover:bg-gray-800 hover:text-white">
+                <i class="fas fa-chart-line mr-2"></i> Analytics
             </a>
-            <a href="#" class="flex items-center py-3 px-3 rounded text-gray-400 hover:bg-gray-800 hover:text-white">
-                <i class="fas fa-cog mr-3"></i> Settings
+            <a href="#" class="block py-2 px-3 rounded text-gray-400 hover:bg-gray-800 hover:text-white">
+                <i class="fas fa-cog mr-2"></i> Settings
             </a>
         </nav>
-        
         <div class="p-4 border-t border-gray-800">
-            <button class="w-full flex items-center py-3 px-3 rounded text-gray-400 hover:bg-gray-800 hover:text-white">
-                <i class="fas fa-sign-out-alt mr-3"></i> Logout
-            </button>
-        </div>
-    </div>
-
-    <!-- Desktop Sidebar -->
-    <div class="hidden md:flex md:flex-col md:w-64 bg-gray-900 text-white fixed inset-y-0 left-0">
-        <div class="p-4 border-b border-gray-800">
-            <div class="flex items-center space-x-3">
-                <div class="w-8 h-8 rounded bg-indigo-500 flex items-center justify-center">
-                    <i class="fas fa-chart-bar"></i>
-                </div>
-                <span class="text-lg font-bold">Analytics Board</span>
-            </div>
-        </div>
-        
-        <div class="p-4 border-b border-gray-800">
-            <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center">
-                    <span id="desktopAvatar" class="text-white font-medium">HB</span>
-                </div>
-                <div>
-                    <div id="desktopUserName" class="font-medium">Habeeb</div>
-                    <div class="text-xs text-gray-400">Admin</div>
-                </div>
-            </div>
-        </div>
-        
-        <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
-            <a href="#" class="flex items-center py-3 px-3 rounded bg-gray-800 text-white">
-                <i class="fas fa-tachometer-alt mr-3"></i> Dashboard
-            </a>
-            <a href="#" class="flex items-center py-3 px-3 rounded text-gray-400 hover:bg-gray-800 hover:text-white">
-                <i class="fas fa-store mr-3"></i> Stores
-            </a>
-            <a href="#" class="flex items-center py-3 px-3 rounded text-gray-400 hover:bg-gray-800 hover:text-white">
-                <i class="fas fa-shield-alt mr-3"></i> Compliance
-            </a>
-            <a href="#" class="flex items-center py-3 px-3 rounded text-gray-400 hover:bg-gray-800 hover:text-white">
-                <i class="fas fa-chart-line mr-3"></i> Analytics
-            </a>
-            <a href="#" class="flex items-center py-3 px-3 rounded text-gray-400 hover:bg-gray-800 hover:text-white">
-                <i class="fas fa-cog mr-3"></i> Settings
-            </a>
-        </nav>
-        
-        <div class="p-4 border-t border-gray-800">
-            <button class="w-full flex items-center py-3 px-3 rounded text-gray-400 hover:bg-gray-800 hover:text-white">
-                <i class="fas fa-sign-out-alt mr-3"></i> Logout
+            <button class="w-full py-2 px-3 rounded text-gray-400 hover:bg-gray-800 hover:text-white text-left">
+                <i class="fas fa-sign-out-alt mr-2"></i> Logout
             </button>
         </div>
     </div>
 
     <!-- Main Content -->
-    <div class="md:ml-64">
+    <div class="flex-1 flex flex-col overflow-hidden">
         <!-- Top Navigation -->
-        <header class="bg-white border-b border-gray-200 sticky top-0 z-30">
-            <div class="flex items-center justify-between px-4 py-3">
+        <header class="bg-white border-b border-gray-200 flex-shrink-0">
+            <div class="flex items-center justify-between px-4 md:px-6 py-3">
                 <div class="flex items-center">
-                    <button onclick="toggleMobileMenu()" class="md:hidden mr-4 text-gray-600">
-                        <i class="fas fa-bars text-xl"></i>
+                    <button class="md:hidden mr-4 text-gray-500">
+                        <i class="fas fa-bars"></i>
                     </button>
-                    <h1 class="text-lg md:text-xl font-semibold text-gray-800">Welcome <span id="welcomeName">Habeeb</span>...</h1>
+                    <h1 class="text-lg md:text-xl font-semibold text-gray-800">Welcome Habeeb...</h1>
                 </div>
-                <div class="flex items-center space-x-3">
-                    <button class="text-gray-600 hover:text-gray-900 p-2">
-                        <i class="fas fa-bell text-lg"></i>
-                        <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">3</span>
+                <div class="flex items-center space-x-4">
+                    <button class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-bell"></i>
                     </button>
-                    <button class="text-gray-600 hover:text-gray-900 p-2">
-                        <i class="fas fa-question-circle text-lg"></i>
-                    </button>
-                    <button onclick="openSettings()" class="text-gray-600 hover:text-gray-900 p-2">
-                        <i class="fas fa-user-cog text-lg"></i>
+                    <button class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-question-circle"></i>
                     </button>
                 </div>
             </div>
         </header>
 
         <!-- Main Content Area -->
-        <main class="p-4 md:p-6 min-h-screen">
+        <main class="flex-1 overflow-y-auto p-4 md:p-6 bg-gray-50">
             <div class="max-w-6xl mx-auto">
                 <!-- Compliance Score Summary -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-6 mb-6">
+                    <div class="bg-white rounded-lg shadow-md p-4 md:p-6">
                         <div class="flex items-center justify-between">
                             <div>
-                                <p class="text-sm text-gray-500 mb-1">Overall Score</p>
-                                <div class="text-3xl font-bold text-green-600">92%</div>
+                                <p class="text-sm text-gray-500">Overall Score</p>
+                                <div class="compliance-score score-high" id="complianceScore">92%</div>
                             </div>
-                            <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
-                                <i class="fas fa-chart-bar text-green-600 text-xl"></i>
+                            <div class="w-12 h-12 md:w-16 md:h-16 rounded-full bg-green-100 flex items-center justify-center">
+                                <i class="fas fa-chart-bar text-green-600 text-xl md:text-2xl"></i>
                             </div>
                         </div>
                         <div class="mt-4">
@@ -265,14 +222,14 @@
                         </div>
                     </div>
                     
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+                    <div class="bg-white rounded-lg shadow-md p-4 md:p-6">
                         <div class="flex items-center justify-between">
                             <div>
-                                <p class="text-sm text-gray-500 mb-1">Critical Issues</p>
-                                <div class="text-3xl font-bold text-gray-700">0</div>
+                                <p class="text-sm text-gray-500">Critical Issues</p>
+                                <div class="text-2xl md:text-3xl font-bold text-red-600" id="criticalIssues">0</div>
                             </div>
-                            <div class="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center">
-                                <i class="fas fa-exclamation-triangle text-gray-600 text-xl"></i>
+                            <div class="w-12 h-12 md:w-16 md:h-16 rounded-full bg-red-100 flex items-center justify-center">
+                                <i class="fas fa-exclamation-triangle text-red-600 text-xl md:text-2xl"></i>
                             </div>
                         </div>
                         <div class="mt-4">
@@ -280,14 +237,14 @@
                         </div>
                     </div>
                     
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+                    <div class="bg-white rounded-lg shadow-md p-4 md:p-6">
                         <div class="flex items-center justify-between">
                             <div>
-                                <p class="text-sm text-gray-500 mb-1">Warnings</p>
-                                <div class="text-3xl font-bold text-gray-700">0</div>
+                                <p class="text-sm text-gray-500">Warnings</p>
+                                <div class="text-2xl md:text-3xl font-bold text-yellow-600" id="warningIssues">0</div>
                             </div>
-                            <div class="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center">
-                                <i class="fas fa-exclamation-circle text-gray-600 text-xl"></i>
+                            <div class="w-12 h-12 md:w-16 md:h-16 rounded-full bg-yellow-100 flex items-center justify-center">
+                                <i class="fas fa-exclamation-circle text-yellow-600 text-xl md:text-2xl"></i>
                             </div>
                         </div>
                         <div class="mt-4">
@@ -295,14 +252,14 @@
                         </div>
                     </div>
                     
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+                    <div class="bg-white rounded-lg shadow-md p-4 md:p-6">
                         <div class="flex items-center justify-between">
                             <div>
-                                <p class="text-sm text-gray-500 mb-1">Total Issues</p>
-                                <div class="text-3xl font-bold text-gray-700">0</div>
+                                <p class="text-sm text-gray-500">Total Issues</p>
+                                <div class="text-2xl md:text-3xl font-bold text-gray-700" id="totalIssues">0</div>
                             </div>
-                            <div class="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center">
-                                <i class="fas fa-list-alt text-gray-600 text-xl"></i>
+                            <div class="w-12 h-12 md:w-16 md:h-16 rounded-full bg-blue-100 flex items-center justify-center">
+                                <i class="fas fa-list-alt text-blue-600 text-xl md:text-2xl"></i>
                             </div>
                         </div>
                         <div class="mt-4">
@@ -312,440 +269,148 @@
                 </div>
                 
                 <!-- Analysis Form -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 mb-6">
-                    <h2 class="text-xl font-semibold text-gray-800 mb-5">Run New Compliance Analysis</h2>
-                    <form id="analysisForm" onsubmit="return runAnalysis()">
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-5">
+                <div class="bg-white rounded-lg shadow-md p-4 md:p-6 mb-6">
+                    <h2 class="text-lg font-semibold text-gray-800 mb-4">Run New Compliance Analysis</h2>
+                    <form id="analysisForm" class="space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div>
-                                <label for="storeName" class="block text-sm font-medium text-gray-700 mb-2">
-                                    Store Name <span class="text-red-500">*</span>
-                                </label>
-                                <input type="text" id="storeName" 
-                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
-                                       placeholder="Enter store name"
-                                       required>
+                                <label for="storeName" class="block text-sm font-medium text-gray-700 mb-1">Store Name</label>
+                                <input type="text" id="storeName" name="storeName" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" required placeholder="Enter store name">
                             </div>
-                            
                             <div>
-                                <label for="storeUrl" class="block text-sm font-medium text-gray-700 mb-2">
-                                    Store URL <span class="text-red-500">*</span>
-                                </label>
-                                <input type="url" id="storeUrl" 
-                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
-                                       placeholder="https://example.com"
-                                       required>
+                                <label for="storeUrl" class="block text-sm font-medium text-gray-700 mb-1">Store URL</label>
+                                <input type="url" id="storeUrl" name="storeUrl" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="https://example.com" required>
                             </div>
-                            
                             <div>
-                                <label for="ticketId" class="block text-sm font-medium text-gray-700 mb-2">
-                                    Ticket ID <span class="text-red-500">*</span>
-                                </label>
-                                <input type="text" id="ticketId" 
-                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
-                                       placeholder="Enter ticket ID"
-                                       required>
+                                <label for="ticketId" class="block text-sm font-medium text-gray-700 mb-1">Ticket ID</label>
+                                <input type="text" id="ticketId" name="ticketId" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" required placeholder="Enter ticket ID">
                             </div>
                         </div>
                         
-                        <div class="mb-5">
-                            <label class="block text-sm font-medium text-gray-700 mb-3">Select Compliance Checks</label>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                                <div class="flex items-center p-2 hover:bg-gray-50 rounded">
-                                    <input type="checkbox" id="ipInfringement" name="checks" value="ipInfringement" 
-                                           class="h-5 w-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
-                                           checked>
-                                    <label for="ipInfringement" class="ml-3 text-sm text-gray-700 cursor-pointer">
-                                        Intellectual Property Infringement
-                                    </label>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Select Compliance Checks</label>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                <div class="flex items-center">
+                                    <input type="checkbox" id="ipInfringement" name="checks" value="ipInfringement" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" checked>
+                                    <label for="ipInfringement" class="ml-2 block text-sm text-gray-700">Intellectual Property Infringement</label>
                                 </div>
-                                
-                                <div class="flex items-center p-2 hover:bg-gray-50 rounded">
-                                    <input type="checkbox" id="apiLicense" name="checks" value="apiLicense" 
-                                           class="h-5 w-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
-                                           checked>
-                                    <label for="apiLicense" class="ml-3 text-sm text-gray-700 cursor-pointer">
-                                        API License Violation
-                                    </label>
+                                <div class="flex items-center">
+                                    <input type="checkbox" id="apiLicense" name="checks" value="apiLicense" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" checked>
+                                    <label for="apiLicense" class="ml-2 block text-sm text-gray-700">API License Violation</label>
                                 </div>
-                                
-                                <div class="flex items-center p-2 hover:bg-gray-50 rounded">
-                                    <input type="checkbox" id="httpHeaders" name="checks" value="httpHeaders" 
-                                           class="h-5 w-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
-                                           checked>
-                                    <label for="httpHeaders" class="ml-3 text-sm text-gray-700 cursor-pointer">
-                                        Incomplete HTTP Response Headers
-                                    </label>
+                                <div class="flex items-center">
+                                    <input type="checkbox" id="httpHeaders" name="checks" value="httpHeaders" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" checked>
+                                    <label for="httpHeaders" class="ml-2 block text-sm text-gray-700">Incomplete HTTP Response Headers</label>
                                 </div>
-                                
-                                <div class="flex items-center p-2 hover:bg-gray-50 rounded">
-                                    <input type="checkbox" id="sellerPermit" name="checks" value="sellerPermit" 
-                                           class="h-5 w-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
-                                           checked>
-                                    <label for="sellerPermit" class="ml-3 text-sm text-gray-700 cursor-pointer">
-                                        Missing Seller Permit
-                                    </label>
+                                <div class="flex items-center">
+                                    <input type="checkbox" id="sellerPermit" name="checks" value="sellerPermit" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" checked>
+                                    <label for="sellerPermit" class="ml-2 block text-sm text-gray-700">Missing Seller Permit</label>
                                 </div>
-                                
-                                <div class="flex items-center p-2 hover:bg-gray-50 rounded">
-                                    <input type="checkbox" id="csrfCompliance" name="checks" value="csrfCompliance" 
-                                           class="h-5 w-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
-                                           checked>
-                                    <label for="csrfCompliance" class="ml-3 text-sm text-gray-700 cursor-pointer">
-                                        CSRF Compliance Status
-                                    </label>
+                                <div class="flex items-center">
+                                    <input type="checkbox" id="csrfCompliance" name="checks" value="csrfCompliance" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" checked>
+                                    <label for="csrfCompliance" class="ml-2 block text-sm text-gray-700">CSRF Compliance Status</label>
                                 </div>
-                                
-                                <div class="flex items-center p-2 hover:bg-gray-50 rounded">
-                                    <input type="checkbox" id="gdprCompliance" name="checks" value="gdprCompliance" 
-                                           class="h-5 w-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
-                                           checked>
-                                    <label for="gdprCompliance" class="ml-3 text-sm text-gray-700 cursor-pointer">
-                                        GDPR Compliance
-                                    </label>
-                                </div>
-                                
-                                <div class="flex items-center p-2 hover:bg-gray-50 rounded">
-                                    <input type="checkbox" id="paymentSecurity" name="checks" value="paymentSecurity" 
-                                           class="h-5 w-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
-                                           checked>
-                                    <label for="paymentSecurity" class="ml-3 text-sm text-gray-700 cursor-pointer">
-                                        Payment Security
-                                    </label>
-                                </div>
-                                
-                                <div class="flex items-center p-2 hover:bg-gray-50 rounded">
-                                    <input type="checkbox" id="allChecks" 
-                                           class="h-5 w-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
-                                           checked
-                                           onclick="toggleAllChecks(this)">
-                                    <label for="allChecks" class="ml-3 text-sm text-gray-700 font-medium cursor-pointer">
-                                        Select All Checks
-                                    </label>
+                                <div class="flex items-center">
+                                    <input type="checkbox" id="allChecks" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" checked>
+                                    <label for="allChecks" class="ml-2 block text-sm text-gray-700 font-medium">Select All Checks</label>
                                 </div>
                             </div>
                         </div>
                         
                         <div class="pt-2">
-                            <button type="submit" 
-                                    class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-200">
+                            <button type="submit" class="btn-primary text-white px-4 py-2 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 w-full md:w-auto">
                                 <i class="fas fa-search mr-2"></i> Run Analysis
                             </button>
                         </div>
                     </form>
                 </div>
                 
-                <!-- Results Section -->
-                <div id="resultsSection" class="hidden bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+                <!-- Results Section (Initially Hidden) -->
+                <div id="resultsSection" class="hidden bg-white rounded-lg shadow-md p-4 md:p-6">
                     <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-                        <h2 class="text-xl font-semibold text-gray-800">Analysis Results</h2>
+                        <h2 class="text-lg font-semibold text-gray-800">Analysis Results</h2>
                         <div class="flex flex-wrap gap-2">
-                            <button onclick="exportPDF()" class="px-4 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">
-                                <i class="fas fa-file-pdf mr-2"></i> PDF
+                            <button id="exportPdf" class="px-3 py-1 border border-gray-300 rounded-md text-sm hover:bg-gray-50">
+                                <i class="fas fa-file-pdf mr-1"></i> PDF
                             </button>
-                            <button onclick="exportCSV()" class="px-4 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">
-                                <i class="fas fa-file-csv mr-2"></i> CSV
+                            <button id="exportCsv" class="px-3 py-1 border border-gray-300 rounded-md text-sm hover:bg-gray-50">
+                                <i class="fas fa-file-csv mr-1"></i> CSV
                             </button>
-                            <button onclick="reanalyze()" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700">
-                                <i class="fas fa-redo mr-2"></i> Re-analyze
+                            <button id="reanalyze" class="px-3 py-1 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700">
+                                <i class="fas fa-redo mr-1"></i> Re-analyze
                             </button>
                         </div>
                     </div>
                     
                     <div class="mb-6">
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                                <div class="text-sm text-gray-500 mb-1">Store Name</div>
-                                <div id="resultStoreName" class="font-medium text-gray-800 text-lg">-</div>
+                            <div class="bg-gray-50 p-3 rounded-md">
+                                <div class="text-sm text-gray-500">Store Name</div>
+                                <div id="resultStoreName" class="font-medium">-</div>
                             </div>
-                            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                                <div class="text-sm text-gray-500 mb-1">Store URL</div>
-                                <div id="resultStoreUrl" class="font-medium text-gray-800 text-lg">-</div>
+                            <div class="bg-gray-50 p-3 rounded-md">
+                                <div class="text-sm text-gray-500">Store URL</div>
+                                <div id="resultStoreUrl" class="font-medium">-</div>
                             </div>
-                            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                                <div class="text-sm text-gray-500 mb-1">Ticket ID</div>
-                                <div id="resultTicketId" class="font-medium text-gray-800 text-lg">-</div>
+                            <div class="bg-gray-50 p-3 rounded-md">
+                                <div class="text-sm text-gray-500">Ticket ID</div>
+                                <div id="resultTicketId" class="font-medium">-</div>
                             </div>
                         </div>
                     </div>
                     
-                    <div class="mb-6">
-                        <div class="flex space-x-6 border-b border-gray-200 overflow-x-auto pb-2">
-                            <button id="tabAll" onclick="switchTab('all')" class="text-gray-600 hover:text-blue-600 font-medium pb-2 border-b-2 border-blue-600 text-blue-600 whitespace-nowrap">
+                    <div class="border-b border-gray-200 mb-6 overflow-x-auto">
+                        <nav class="-mb-px flex space-x-4 md:space-x-8 min-w-max">
+                            <button id="tabAll" class="tab-active whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
                                 All Issues
                             </button>
-                            <button id="tabCritical" onclick="switchTab('critical')" class="text-gray-600 hover:text-blue-600 font-medium pb-2 border-b-2 border-transparent whitespace-nowrap">
+                            <button id="tabCritical" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300">
                                 Critical
                             </button>
-                            <button id="tabWarnings" onclick="switchTab('warnings')" class="text-gray-600 hover:text-blue-600 font-medium pb-2 border-b-2 border-transparent whitespace-nowrap">
+                            <button id="tabWarnings" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300">
                                 Warnings
                             </button>
-                            <button id="tabInfo" onclick="switchTab('info')" class="text-gray-600 hover:text-blue-600 font-medium pb-2 border-b-2 border-transparent whitespace-nowrap">
+                            <button id="tabInfo" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300">
                                 Information
                             </button>
-                        </div>
+                        </nav>
                     </div>
                     
                     <div id="resultsContainer" class="space-y-4">
-                        <!-- Results will be added here -->
+                        <!-- Results will be dynamically inserted here -->
                     </div>
                 </div>
             </div>
         </main>
     </div>
 
-    <!-- Settings Modal -->
-    <div id="settingsOverlay" class="overlay" onclick="closeSettings()"></div>
-    <div id="settingsModal" class="settings-modal fixed inset-0 flex items-center justify-center p-4">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
-            <div class="p-6">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="text-xl font-semibold text-gray-800">Edit Profile Settings</h3>
-                    <button onclick="closeSettings()" class="text-gray-400 hover:text-gray-600">
-                        <i class="fas fa-times text-xl"></i>
-                    </button>
-                </div>
-                
-                <form onsubmit="saveProfile(event)" id="profileForm">
-                    <div class="space-y-4">
-                        <div>
-                            <label for="editName" class="block text-sm font-medium text-gray-700 mb-2">Your Name</label>
-                            <input type="text" id="editName" 
-                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                   value="Habeeb"
-                                   required>
-                        </div>
-                        
-                        <div>
-                            <label for="editEmail" class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
-                            <input type="email" id="editEmail" 
-                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                   value="habeeb@example.com"
-                                   required>
-                        </div>
-                        
-                        <div>
-                            <label for="editRole" class="block text-sm font-medium text-gray-700 mb-2">Role</label>
-                            <select id="editRole" 
-                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                                <option value="admin" selected>Admin</option>
-                                <option value="analyst">Compliance Analyst</option>
-                                <option value="manager">Manager</option>
-                                <option value="viewer">Viewer</option>
-                            </select>
-                        </div>
-                        
-                        <div>
-                            <label for="editAvatar" class="block text-sm font-medium text-gray-700 mb-2">Avatar Initials</label>
-                            <input type="text" id="editAvatar" 
-                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                   maxlength="2"
-                                   value="HB"
-                                   required>
-                            <p class="text-xs text-gray-500 mt-2">Enter 2 characters for your avatar initials</p>
-                        </div>
-                        
-                        <div class="pt-4">
-                            <button type="submit" 
-                                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-200">
-                                Save Changes
-                            </button>
-                        </div>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
     <script>
-        // Initialize the page
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('Dashboard loaded successfully');
-            
-            // Initialize all checkboxes as checked
-            const checkboxes = document.querySelectorAll('input[name="checks"]');
-            checkboxes.forEach(checkbox => {
-                checkbox.checked = true;
-            });
-            
-            // Test form inputs
-            const formInputs = document.querySelectorAll('#analysisForm input, #analysisForm select, #analysisForm textarea');
-            formInputs.forEach(input => {
-                input.addEventListener('focus', function() {
-                    console.log('Input focused:', this.id);
-                });
-                input.addEventListener('input', function() {
-                    console.log('Input changed:', this.id, this.value);
-                });
-            });
-            
-            // Add click event to checkboxes for testing
-            const allCheckboxes = document.querySelectorAll('input[type="checkbox"]');
-            allCheckboxes.forEach(checkbox => {
-                checkbox.addEventListener('click', function(e) {
-                    console.log('Checkbox clicked:', this.id, this.checked);
-                    e.stopPropagation();
-                });
-                
-                // Also add change event
-                checkbox.addEventListener('change', function(e) {
-                    console.log('Checkbox changed:', this.id, this.checked);
-                });
-            });
-        });
-        
-        // Mobile menu functions
-        function toggleMobileMenu() {
-            const mobileMenu = document.getElementById('mobileMenu');
-            const overlay = document.getElementById('mobileOverlay');
-            
-            mobileMenu.classList.toggle('active');
-            overlay.classList.toggle('active');
-            
-            if (mobileMenu.classList.contains('active')) {
-                document.body.style.overflow = 'hidden';
-            } else {
-                document.body.style.overflow = '';
-            }
-        }
-        
-        // Settings modal functions
-        function openSettings() {
-            const modal = document.getElementById('settingsModal');
-            const overlay = document.getElementById('settingsOverlay');
-            
-            modal.classList.add('active');
-            overlay.classList.add('active');
-            document.body.style.overflow = 'hidden';
-        }
-        
-        function closeSettings() {
-            const modal = document.getElementById('settingsModal');
-            const overlay = document.getElementById('settingsOverlay');
-            
-            modal.classList.remove('active');
-            overlay.classList.remove('active');
-            document.body.style.overflow = '';
-        }
-        
-        // Save profile function
-        function saveProfile(event) {
-            event.preventDefault();
-            
-            const newName = document.getElementById('editName').value;
-            const newAvatar = document.getElementById('editAvatar').value;
-            
-            // Update name in all locations
-            document.getElementById('welcomeName').textContent = newName;
-            document.getElementById('desktopUserName').textContent = newName;
-            document.getElementById('mobileUserName').textContent = newName;
-            
-            // Update avatar initials
-            document.getElementById('desktopAvatar').textContent = newAvatar;
-            document.getElementById('mobileAvatar').textContent = newAvatar;
-            
-            alert(`Profile updated successfully! Welcome ${newName}.`);
-            closeSettings();
-        }
-        
-        // Toggle all checks
-        function toggleAllChecks(element) {
-            const checkboxes = document.querySelectorAll('input[name="checks"]');
-            const isChecked = element.checked;
-            
-            checkboxes.forEach(checkbox => {
-                checkbox.checked = isChecked;
-            });
-            
-            console.log('All checkboxes toggled to:', isChecked);
-        }
-        
-        // Run analysis function
-        function runAnalysis() {
-            console.log('Run Analysis function called');
-            
-            // Get form values
-            const storeName = document.getElementById('storeName').value;
-            const storeUrl = document.getElementById('storeUrl').value;
-            const ticketId = document.getElementById('ticketId').value;
-            
-            console.log('Form values:', { storeName, storeUrl, ticketId });
-            
-            // Validate inputs
-            if (!storeName || !storeUrl || !ticketId) {
-                alert('Please fill in all required fields: Store Name, Store URL, and Ticket ID.');
-                return false;
-            }
-            
-            // Validate URL format
-            try {
-                new URL(storeUrl);
-            } catch (e) {
-                alert('Please enter a valid URL starting with http:// or https://');
-                return false;
-            }
-            
-            // Show loading state
-            const runButton = document.querySelector('#analysisForm button[type="submit"]');
-            const originalText = runButton.innerHTML;
-            runButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Analyzing...';
-            runButton.disabled = true;
-            
-            // Simulate API call
-            setTimeout(() => {
-                // Update results
-                document.getElementById('resultStoreName').textContent = storeName;
-                document.getElementById('resultStoreUrl').textContent = storeUrl;
-                document.getElementById('resultTicketId').textContent = ticketId;
-                
-                // Update dashboard scores
-                document.querySelector('.text-3xl.text-green-600').textContent = '39%';
-                document.querySelector('.text-3xl.text-green-600').className = 'text-3xl font-bold text-red-600';
-                document.querySelector('.bg-green-500.h-2').style.width = '39%';
-                document.querySelector('.bg-green-500.h-2').className = 'bg-red-500 h-2 rounded-full';
-                
-                // Update issue counts
-                document.querySelectorAll('.text-3xl.font-bold.text-gray-700')[0].textContent = '7';
-                document.querySelectorAll('.text-3xl.font-bold.text-gray-700')[1].textContent = '5';
-                document.querySelectorAll('.text-3xl.font-bold.text-gray-700')[2].textContent = '12';
-                
-                // Change icon colors for issues
-                const issueIcons = document.querySelectorAll('.bg-gray-100');
-                issueIcons[0].className = 'w-12 h-12 rounded-full bg-red-100 flex items-center justify-center';
-                issueIcons[1].className = 'w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center';
-                issueIcons[2].className = 'w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center';
-                
-                // Generate results
-                generateResults();
-                
-                // Show results section
-                document.getElementById('resultsSection').classList.remove('hidden');
-                
-                // Scroll to results
-                document.getElementById('resultsSection').scrollIntoView({ 
-                    behavior: 'smooth',
-                    block: 'start'
-                });
-                
-                // Reset button
-                runButton.innerHTML = originalText;
-                runButton.disabled = false;
-                
-                console.log('Analysis completed successfully');
-            }, 1500);
-            
-            return false; // Prevent form submission
-        }
-        
-        // Generate sample results
-        function generateResults() {
+            const analysisForm = document.getElementById('analysisForm');
+            const resultsSection = document.getElementById('resultsSection');
             const resultsContainer = document.getElementById('resultsContainer');
-            resultsContainer.innerHTML = '';
+            const resultStoreName = document.getElementById('resultStoreName');
+            const resultStoreUrl = document.getElementById('resultStoreUrl');
+            const resultTicketId = document.getElementById('resultTicketId');
+            const allChecks = document.getElementById('allChecks');
             
-            const results = [
-                {
+            // Tab switching
+            const tabAll = document.getElementById('tabAll');
+            const tabCritical = document.getElementById('tabCritical');
+            const tabWarnings = document.getElementById('tabWarnings');
+            const tabInfo = document.getElementById('tabInfo');
+            
+            // Sample data for results - Updated based on your requirements
+            const sampleResults = {
+                ipInfringement: {
+                    title: "Intellectual Property Infringement",
+                    severity: "none", // No issues
+                    details: [] // Empty array = no issues found
+                },
+                apiLicense: {
                     title: "API License Violation",
                     severity: "high",
-                    issues: [
+                    details: [
                         {
                             title: "Unauthorized API Usage",
                             description: "Store is accessing Shopify APIs without proper authorization or exceeding rate limits in violation of Section 4.3 of the API License Agreement.",
@@ -757,13 +422,29 @@
                             description: "Automated data extraction from Shopify platform detected without proper API credentials, violating Terms of Service and potentially compromising platform security.",
                             risk: "High",
                             recommendation: "Stop all scraping activities immediately and migrate to official Shopify APIs with proper authentication and rate limiting."
+                        },
+                        {
+                            title: "Third-Party Integration Violation",
+                            description: "Unapproved third-party integrations accessing restricted endpoints, potentially exposing sensitive customer data and violating data protection agreements.",
+                            risk: "Medium",
+                            recommendation: "Remove all unauthorized integrations and use only Shopify-approved apps and APIs. Complete security audit of all connected services."
                         }
                     ]
                 },
-                {
+                httpHeaders: {
+                    title: "Incomplete HTTP Response Headers",
+                    severity: "none", // No issues
+                    details: [] // Empty array = no issues found
+                },
+                sellerPermit: {
+                    title: "Missing Seller Permit",
+                    severity: "none", // No issues
+                    details: [] // Empty array = no issues found
+                },
+                csrfCompliance: {
                     title: "CSRF Compliance Status",
                     severity: "high",
-                    issues: [
+                    details: [
                         {
                             title: "Confidentiality Breach Risk",
                             description: "CSRF vulnerability detected - allows unauthorized actions on behalf of authenticated users, directly threatening confidentiality of customer data, transaction information, and Shopify platform security.",
@@ -775,148 +456,246 @@
                             description: "Active CSRF vulnerability violates Shopify Terms of Service Confidentiality clause (Section 10.1). Failing to address may result in immediate store suspension or termination.",
                             risk: "High",
                             recommendation: "Implement CSRF protection middleware, validate origin headers, and ensure all state-changing operations require unique tokens. Shopify Partners should be engaged for immediate remediation."
+                        },
+                        {
+                            title: "Data Protection Non-Compliance",
+                            description: "CSRF flaws expose sensitive data to potential extraction via unauthorized actions, violating GDPR, CCPA, and PCI DSS requirements that Shopify must enforce.",
+                            risk: "High",
+                            recommendation: "Add Content-Security-Policy headers, implement double-submit cookie pattern, and conduct security audit of all form submissions and AJAX requests."
                         }
                     ]
-                },
-                {
-                    title: "Intellectual Property Infringement",
-                    severity: "none",
-                    issues: []
                 }
-            ];
+            };
             
-            results.forEach(result => {
-                const card = document.createElement('div');
-                card.className = 'border border-gray-200 rounded-lg overflow-hidden';
+            // Initialize all checkboxes as checked
+            const checkboxes = document.querySelectorAll('input[name="checks"]');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = true;
+            });
+            
+            // Select all checks functionality
+            allChecks.addEventListener('change', function() {
+                checkboxes.forEach(checkbox => {
+                    checkbox.checked = allChecks.checked;
+                });
+            });
+            
+            // Form submission
+            analysisForm.addEventListener('submit', function(e) {
+                e.preventDefault();
                 
-                if (result.severity === 'high') {
-                    card.classList.add('border-l-4', 'border-l-red-500');
-                } else if (result.severity === 'none') {
-                    card.classList.add('bg-green-50', 'border-green-100');
+                // Get form values
+                const storeName = document.getElementById('storeName').value;
+                const storeUrl = document.getElementById('storeUrl').value;
+                const ticketId = document.getElementById('ticketId').value;
+                const selectedChecks = Array.from(document.querySelectorAll('input[name="checks"]:checked')).map(el => el.value);
+                
+                // If no checks selected, select all
+                if (selectedChecks.length === 0) {
+                    checkboxes.forEach(checkbox => checkbox.checked = true);
+                    selectedChecks.push(...Array.from(checkboxes).map(cb => cb.value));
                 }
                 
-                let issuesHTML = '';
+                // Update result headers
+                resultStoreName.textContent = storeName;
+                resultStoreUrl.textContent = storeUrl;
+                resultTicketId.textContent = ticketId;
                 
-                if (result.issues.length > 0) {
-                    result.issues.forEach(issue => {
-                        issuesHTML += `
-                            <div class="p-4 border-b border-gray-100 last:border-b-0">
-                                <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-3 gap-2">
-                                    <h4 class="font-medium text-gray-800 text-base">${issue.title}</h4>
-                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 shrink-0">
-                                        ${issue.risk} Risk
+                // Clear previous results
+                resultsContainer.innerHTML = '';
+                
+                // Generate results for selected checks
+                let totalIssues = 0;
+                let criticalIssues = 0;
+                let warningIssues = 0;
+                
+                selectedChecks.forEach(check => {
+                    if (sampleResults[check]) {
+                        const result = sampleResults[check];
+                        
+                        // Count issues
+                        result.details.forEach(detail => {
+                            totalIssues++;
+                            if (detail.risk === 'High') criticalIssues++;
+                            if (detail.risk === 'Medium') warningIssues++;
+                        });
+                        
+                        const resultCard = document.createElement('div');
+                        
+                        if (result.severity === 'none') {
+                            // Show "No Issues Found" card
+                            resultCard.className = 'analysis-card no-issues rounded-lg shadow-sm overflow-hidden';
+                            
+                            resultCard.innerHTML = `
+                                <div class="px-4 py-3 bg-green-50 border-b border-green-200 flex justify-between items-center">
+                                    <h3 class="font-semibold text-gray-800">${result.title}</h3>
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                        <i class="fas fa-check-circle mr-1"></i> Compliant
                                     </span>
                                 </div>
-                                <p class="text-sm text-gray-600 mb-3">${issue.description}</p>
-                                <div class="bg-blue-50 p-3 rounded-lg border border-blue-100">
-                                    <h5 class="text-xs font-semibold text-blue-800 uppercase tracking-wider mb-1">Recommendation</h5>
-                                    <p class="text-sm text-blue-700">${issue.recommendation}</p>
+                                <div class="p-6 text-center">
+                                    <div class="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
+                                        <i class="fas fa-check text-green-600 text-2xl"></i>
+                                    </div>
+                                    <h4 class="font-medium text-gray-800 mb-2">No Issues Found</h4>
+                                    <p class="text-sm text-gray-600">This compliance area passes all security checks and meets Shopify requirements.</p>
                                 </div>
-                            </div>
-                        `;
-                    });
-                    
-                    card.innerHTML = `
-                        <div class="px-4 py-3 bg-gray-50 border-b border-gray-200 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
-                            <h3 class="font-semibold text-gray-800 text-lg">${result.title}</h3>
-                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                Critical (${result.issues.length} issues)
-                            </span>
-                        </div>
-                        ${issuesHTML}
-                    `;
-                } else {
-                    card.innerHTML = `
-                        <div class="px-4 py-3 bg-green-50 border-b border-green-100 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
-                            <h3 class="font-semibold text-gray-800 text-lg">${result.title}</h3>
-                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                <i class="fas fa-check-circle mr-1"></i> Compliant
-                            </span>
-                        </div>
-                        <div class="p-6 text-center">
-                            <div class="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
-                                <i class="fas fa-check text-green-600 text-2xl"></i>
-                            </div>
-                            <h4 class="font-medium text-gray-800 text-lg mb-2">No Issues Found</h4>
-                            <p class="text-sm text-gray-600">This compliance area passes all security checks and meets Shopify requirements.</p>
-                        </div>
-                    `;
+                            `;
+                        } else {
+                            // Show issues card
+                            resultCard.className = `analysis-card bg-white rounded-lg shadow-sm overflow-hidden ${result.severity === 'high' ? 'severity-high' : 'severity-medium'}`;
+                            
+                            let detailsHtml = '';
+                            result.details.forEach(detail => {
+                                detailsHtml += `
+                                    <div class="p-4 border-b border-gray-100 last:border-b-0">
+                                        <div class="flex justify-between items-start mb-2">
+                                            <h4 class="font-medium text-gray-800">${detail.title}</h4>
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${detail.risk === 'High' ? 'bg-red-100 text-red-800' : detail.risk === 'Medium' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800'}">
+                                                ${detail.risk} Risk
+                                            </span>
+                                        </div>
+                                        <p class="text-sm text-gray-600 mb-3">${detail.description}</p>
+                                        <div class="bg-blue-50 p-3 rounded-md">
+                                            <h5 class="text-xs font-semibold text-blue-800 uppercase tracking-wider mb-1">Recommendation</h5>
+                                            <p class="text-sm text-blue-700">${detail.recommendation}</p>
+                                        </div>
+                                    </div>
+                                `;
+                            });
+                            
+                            resultCard.innerHTML = `
+                                <div class="px-4 py-3 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
+                                    <h3 class="font-semibold text-gray-800">${result.title}</h3>
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${result.severity === 'high' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'}">
+                                        ${result.severity === 'high' ? 'Critical' : 'Warning'} (${result.details.length} issues)
+                                    </span>
+                                </div>
+                                ${detailsHtml}
+                            `;
+                        }
+                        
+                        resultsContainer.appendChild(resultCard);
+                    }
+                });
+                
+                // Update dashboard to show 39% with 12 issues
+                updateDashboardTo39Percent();
+                
+                // Show results section
+                resultsSection.classList.remove('hidden');
+                
+                // Scroll to results
+                setTimeout(() => {
+                    resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 100);
+            });
+            
+            // Update dashboard to show 39% with 12 issues
+            function updateDashboardTo39Percent() {
+                // Update compliance score to 39%
+                const scoreElement = document.getElementById('complianceScore');
+                const scoreBar = document.querySelector('.bg-green-500');
+                
+                scoreElement.textContent = '39%';
+                scoreElement.className = 'compliance-score score-low';
+                
+                if (scoreBar) {
+                    scoreBar.style.width = '39%';
+                    scoreBar.className = 'bg-red-500 h-2 rounded-full';
                 }
                 
-                resultsContainer.appendChild(card);
-            });
-        }
-        
-        // Tab switching
-        function switchTab(tabName) {
-            // Reset all tabs
-            const tabs = ['all', 'critical', 'warnings', 'info'];
-            tabs.forEach(tab => {
-                const tabElement = document.getElementById(`tab${tab.charAt(0).toUpperCase() + tab.slice(1)}`);
-                if (tabElement) {
-                    if (tab === tabName) {
-                        tabElement.classList.add('border-blue-600', 'text-blue-600');
-                        tabElement.classList.remove('border-transparent');
-                    } else {
-                        tabElement.classList.remove('border-blue-600', 'text-blue-600');
-                        tabElement.classList.add('border-transparent');
+                // Update issue counts to 12 total (7 critical, 5 warnings)
+                document.getElementById('criticalIssues').textContent = '7';
+                document.getElementById('warningIssues').textContent = '5';
+                document.getElementById('totalIssues').textContent = '12';
+                
+                // Update icon colors
+                const criticalIcon = document.querySelector('.bg-red-100');
+                const warningIcon = document.querySelector('.bg-yellow-100');
+                const totalIcon = document.querySelector('.bg-blue-100');
+                
+                if (criticalIcon) criticalIcon.className = 'w-12 h-12 md:w-16 md:h-16 rounded-full bg-red-100 flex items-center justify-center';
+                if (warningIcon) warningIcon.className = 'w-12 h-12 md:w-16 md:h-16 rounded-full bg-yellow-100 flex items-center justify-center';
+                if (totalIcon) totalIcon.className = 'w-12 h-12 md:w-16 md:h-16 rounded-full bg-blue-100 flex items-center justify-center';
+            }
+            
+            // Tab switching functionality
+            function switchTab(activeTab) {
+                // Update active tab styling
+                [tabAll, tabCritical, tabWarnings, tabInfo].forEach(tab => {
+                    tab.classList.remove('tab-active', 'text-indigo-600', 'border-indigo-500');
+                    tab.classList.add('text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
+                });
+                
+                activeTab.classList.add('tab-active', 'text-indigo-600', 'border-indigo-500');
+                activeTab.classList.remove('text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
+                
+                // Filter results based on tab
+                const tabName = activeTab.id.replace('tab', '').toLowerCase();
+                const allCards = document.querySelectorAll('.analysis-card');
+                
+                allCards.forEach(card => {
+                    const severitySpan = card.querySelector('span');
+                    if (severitySpan) {
+                        const severityText = severitySpan.textContent.toLowerCase();
+                        
+                        if (tabName === 'all') {
+                            card.style.display = 'block';
+                        } else if (tabName === 'critical' && severityText.includes('critical')) {
+                            card.style.display = 'block';
+                        } else if (tabName === 'warnings' && severityText.includes('warning')) {
+                            card.style.display = 'block';
+                        } else if (tabName === 'info' && (severityText.includes('information') || severityText.includes('compliant'))) {
+                            card.style.display = 'block';
+                        } else {
+                            card.style.display = 'none';
+                        }
                     }
-                }
+                });
+            }
+            
+            tabAll.addEventListener('click', () => switchTab(tabAll));
+            tabCritical.addEventListener('click', () => switchTab(tabCritical));
+            tabWarnings.addEventListener('click', () => switchTab(tabWarnings));
+            tabInfo.addEventListener('click', () => switchTab(tabInfo));
+            
+            // Export buttons
+            document.getElementById('exportPdf').addEventListener('click', function() {
+                alert('PDF export functionality would generate a comprehensive compliance report including CSRF analysis');
             });
             
-            console.log('Switched to tab:', tabName);
-        }
-        
-        // Export functions
-        function exportPDF() {
-            alert('PDF report will be generated. This feature would connect to a PDF generation service in a real application.');
-        }
-        
-        function exportCSV() {
-            alert('CSV file will be exported. This feature would generate a CSV download in a real application.');
-        }
-        
-        // Re-analyze function
-        function reanalyze() {
-            // Hide results
-            document.getElementById('resultsSection').classList.add('hidden');
-            
-            // Reset dashboard to 92%
-            document.querySelector('.text-3xl').textContent = '92%';
-            document.querySelector('.text-3xl').className = 'text-3xl font-bold text-green-600';
-            document.querySelector('.h-2.rounded-full').style.width = '92%';
-            document.querySelector('.h-2.rounded-full').className = 'bg-green-500 h-2 rounded-full';
-            
-            // Reset issue counts
-            document.querySelectorAll('.text-3xl.font-bold')[1].textContent = '0';
-            document.querySelectorAll('.text-3xl.font-bold')[2].textContent = '0';
-            document.querySelectorAll('.text-3xl.font-bold')[3].textContent = '0';
-            
-            // Reset icon colors
-            const issueIcons = document.querySelectorAll('.w-12.h-12.rounded-full');
-            issueIcons[0].className = 'w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center';
-            issueIcons[1].className = 'w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center';
-            issueIcons[2].className = 'w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center';
-            
-            // Clear form
-            document.getElementById('storeName').value = '';
-            document.getElementById('storeUrl').value = '';
-            document.getElementById('ticketId').value = '';
-            
-            // Scroll to form
-            document.getElementById('analysisForm').scrollIntoView({ 
-                behavior: 'smooth',
-                block: 'start'
+            document.getElementById('exportCsv').addEventListener('click', function() {
+                alert('CSV export functionality would generate a detailed spreadsheet of all compliance issues');
             });
             
-            console.log('Re-analyze clicked');
-        }
-        
-        // Test that everything is working
-        console.log('Dashboard script loaded');
-        console.log('Test: Click Run Analysis button to see results');
-        console.log('Test: Click checkboxes to toggle them');
-        console.log('Test: Click user icon in top right to edit profile');
+            // Re-analyze button
+            document.getElementById('reanalyze').addEventListener('click', function() {
+                // Hide results section
+                resultsSection.classList.add('hidden');
+                
+                // Reset dashboard to 92%
+                document.getElementById('complianceScore').textContent = '92%';
+                document.getElementById('complianceScore').className = 'compliance-score score-high';
+                document.querySelector('.h-2.rounded-full').style.width = '92%';
+                document.querySelector('.h-2.rounded-full').className = 'bg-green-500 h-2 rounded-full';
+                
+                // Reset issue counts
+                document.getElementById('criticalIssues').textContent = '0';
+                document.getElementById('warningIssues').textContent = '0';
+                document.getElementById('totalIssues').textContent = '0';
+                
+                // Clear form
+                document.getElementById('storeName').value = '';
+                document.getElementById('storeUrl').value = '';
+                document.getElementById('ticketId').value = '';
+                
+                // Scroll to form
+                setTimeout(() => {
+                    analysisForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 100);
+            });
+        });
     </script>
 </body>
 </html>
