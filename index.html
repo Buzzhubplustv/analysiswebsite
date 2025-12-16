@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shopify Compliance Analyzer | Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #5c6ac4;
+            --secondary: #202e78;
+            --danger: #de3618;
+            --warning: #ffea8a;
+            --success: #50b83c;
+        }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background-color: #f9fafb;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+        
+        .sidebar {
+            transition: all 0.3s ease;
+        }
+        
+        .analysis-card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .analysis-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        
+        .severity-high {
+            border-left: 4px solid var(--danger);
+        }
+        
+        .severity-medium {
+            border-left: 4px solid var(--warning);
+        }
+        
+        .severity-low {
+            border-left: 4px solid #a2a5b9;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary);
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--secondary);
+        }
+        
+        .tab-active {
+            border-bottom: 3px solid var(--primary);
+            color: var(--primary);
+        }
+        
+        .compliance-score {
+            font-size: 2rem;
+            font-weight: bold;
+        }
+        
+        @media (min-width: 768px) {
+            .compliance-score {
+                font-size: 2.5rem;
+            }
+        }
+        
+        .score-high {
+            color: var(--success);
+        }
+        
+        .score-medium {
+            color: var(--warning);
+        }
+        
+        .score-low {
+            color: var(--danger);
+        }
+        
+        .no-issues-card {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        }
+        
+        .mobile-menu {
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+        }
+        
+        .mobile-menu.open {
+            transform: translateX(0);
+        }
+        
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 40;
+        }
+        
+        .overlay.active {
+            display: block;
+        }
+        
+        .settings-modal {
+            transform: scale(0.9);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+        
+        .settings-modal.active {
+            transform: scale(1);
+            opacity: 1;
+        }
+        
+        input, select, textarea, button {
+            font-size: 16px !important; /* Prevents iOS zoom on focus */
+        }
+        
+        /* Ensure proper scrolling on mobile */
+        .scrollable-content {
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        /* Fix for iOS form elements */
+        @supports (-webkit-touch-callout: none) {
+            input, select, textarea {
+                font-size: 16px !important;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-50">
+    <!-- Mobile Sidebar Overlay -->
+    <div id="mobileOverlay" class="overlay"></div>
+    
+    <!-- Mobile Sidebar -->
+    <div id="mobileMenu" class="mobile-menu fixed inset-y-0 left-0 w-64 bg-gray-900 text-white z-50 md:hidden flex flex-col">
+        <div class="p-4 border-b border-gray-800">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 rounded bg-indigo-500 flex items-center justify-center">
+                        <i class="fas fa-chart-bar"></i>
+                    </div>
+                    <span class="text-xl font-bold">Analytics Board</span>
+                </div>
+                <button id="closeMobileMenu" class="text-gray-400 hover:text-white">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+        </div>
+        <div class="p-4 border-b border-gray-800">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center">
+                    <span id="mobileAvatar" class="text-white font-medium">HB</span>
+                </div>
+                <div>
+                    <div id="mobileUserName" class="font-medium">Habeeb</div>
+                    <div class="text-xs text-gray-400">Admin</div>
+                </div>
+            </div>
+        </div>
+        <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
+            <a href="#" class="flex items-center py-2 px-3 rounded bg-gray-800 text-white">
+                <i class="fas fa-tachometer-alt mr-2"></i> Dashboard
+            </a>
+            <a href="#" class="flex items-center py-2 px-3 rounded text-gray-400 hover:bg-gray-800 hover:text-white">
+                <i class="fas fa-store mr-2"></i> Stores
+            </a>
+            <a href="#" class="flex items-center py-2 px-3 rounded text-gray-400 hover:bg-gray-800 hover:text-white">
+                <i class="fas fa-shield-alt mr-2"></i> Compliance
+            </a>
+            <a href="#" class="flex items-center py-2 px-3 rounded text-gray-400 hover:bg-gray-800 hover:text-white">
+                <i class="fas fa-chart-line mr-2"></i> Analytics
+            </a>
+            <a href="#" class="flex items-center py-2 px-3 rounded text-gray-400 hover:bg-gray-800 hover:text-white">
+                <i class="fas fa-cog mr-2"></i> Settings
+            </a>
+        </nav>
+        <div class="p-4 border-t border-gray-800">
+            <button class="w-full flex items-center py-2 px-3 rounded text-gray-400 hover:bg-gray-800 hover:text-white">
+                <i class="fas fa-sign-out-alt mr-2"></i> Logout
+            </button>
+        </div>
+    </div>
+
+    <!-- Desktop Sidebar -->
+    <div class="hidden md:flex md:flex-col md:w-64 bg-gray-900 text-white fixed inset-y-0 left-0 z-30">
+        <div class="p-4 border-b border-gray-800">
+            <div class="flex items-center space-x-3">
+                <div class="w-8 h-8 rounded bg-indigo-500 flex items-center justify-center">
+                    <i class="fas fa-chart-bar"></i>
+                </div>
+                <span class="text-xl font-bold">Analytics Board</span>
+            </div>
+        </div>
+        <div class="p-4 border-b border-gray-800">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center">
+                    <span id="desktopAvatar" class="text-white font-medium">HB</span>
+                </div>
+                <div>
+                    <div id="desktopUserName" class="font-medium">Habeeb</div>
+                    <div class="text-xs text-gray-400">Admin</div>
+                </div>
+            </div>
+        </div>
+        <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
+            <a href="#" class="flex items-center py-2 px-3 rounded bg-gray-800 text-white">
+                <i class="fas fa-tachometer-alt mr-2"></i> Dashboard
+            </a>
+            <a href="#" class="flex items-center py-2 px-3 rounded text-gray-400 hover:bg-gray-800 hover:text-white">
+                <i class="fas fa-store mr-2"></i> Stores
+            </a>
+            <a href="#" class="flex items-center py-2 px-3 rounded text-gray-400 hover:bg-gray-800 hover:text-white">
+                <i class="fas fa-shield-alt mr-2"></i> Compliance
+            </a>
+            <a href="#" class="flex items-center py-2 px-3 rounded text-gray-400 hover:bg-gray-800 hover:text-white">
+                <i class="fas fa-chart-line mr-2"></i> Analytics
+            </a>
+            <a href="#" class="flex items-center py-2 px-3 rounded text-gray-400 hover:bg-gray-800 hover:text-white">
+                <i class="fas fa-cog mr-2"></i> Settings
+            </a>
+        </nav>
+        <div class="p-4 border-t border-gray-800">
+            <button class="w-full flex items-center py-2 px-3 rounded text-gray-400 hover:bg-gray-800 hover:text-white">
+                <i class="fas fa-sign-out-alt mr-2"></i> Logout
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="md:ml-64 flex flex-col min-h-screen">
+        <!-- Top Navigation -->
+        <header class="bg-white border-b border-gray-200 sticky top-0 z-20">
+            <div class="flex items-center justify-between px-4 py-3">
+                <div class="flex items-center">
+                    <button id="openMobileMenu" class="md:hidden mr-4 text-gray-600">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                    <h1 class="text-lg md:text-xl font-semibold text-gray-800">Welcome <span id="welcomeName">Habeeb</span>...</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button class="text-gray-600 hover:text-gray-900 relative p-1">
+                        <i class="fas fa-bell text-lg"></i>
+                        <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">3</span>
+                    </button>
+                    <button class="text-gray-600 hover:text-gray-900 p-1">
+                        <i class="fas fa-question-circle text-lg"></i>
+                    </button>
+                    <button id="openSettingsHeader" class="text-gray-600 hover:text-gray-900 p-1">
+                        <i class="fas fa-user-cog text-lg"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 p-4 md:p-6 bg-gray-50 overflow-y-auto scrollable-content">
+            <div class="max-w-6xl mx-auto">
+                <!-- Compliance Score Summary -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                    <div class="bg-white rounded-lg shadow p-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-500">Overall Score</p>
+                                <div class="compliance-score score-high" id="complianceScore">92%</div>
+                            </div>
+                            <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
+                                <i class="fas fa-chart-bar text-green-600 text-xl"></i>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <div class="text-xs text-gray-500 mb-1">Compliance Level</div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div id="scoreBar" class="bg-green-500 h-2 rounded-full" style="width: 92%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg shadow p-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-500">Critical Issues</p>
+                                <div class="text-2xl font-bold text-red-600" id="criticalIssues">0</div>
+                            </div>
+                            <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+                                <i class="fas fa-exclamation-triangle text-red-600 text-xl"></i>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <div class="text-xs text-gray-500">Requires immediate action</div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg shadow p-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-500">Warnings</p>
+                                <div class="text-2xl font-bold text-yellow-600" id="warningIssues">0</div>
+                            </div>
+                            <div class="w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center">
+                                <i class="fas fa-exclamation-circle text-yellow-600 text-xl"></i>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <div class="text-xs text-gray-500">Needs attention soon</div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg shadow p-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-500">Total Issues</p>
+                                <div class="text-2xl font-bold text-gray-700" id="totalIssues">0</div>
+                            </div>
+                            <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
+                                <i class="fas fa-list-alt text-blue-600 text-xl"></i>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <div class="text-xs text-gray-500">All identified problems</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Analysis Form -->
+                <div class="bg-white rounded-lg shadow p-4 md:p-6 mb-6">
+                    <h2 class="text-lg font-semibold text-gray-800 mb-4">Run New Compliance Analysis</h2>
+                    <form id="analysisForm" class="space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label for="storeName" class="block text-sm font-medium text-gray-700 mb-2">Store Name</label>
+                                <input type="text" id="storeName" name="storeName" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Enter store name" required>
+                            </div>
+                            <div>
+                                <label for="storeUrl" class="block text-sm font-medium text-gray-700 mb-2">Store URL</label>
+                                <input type="url" id="storeUrl" name="storeUrl" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="https://example.com" required>
+                            </div>
+                            <div>
+                                <label for="ticketId" class="block text-sm font-medium text-gray-700 mb-2">Ticket ID</label>
+                                <input type="text" id="ticketId" name="ticketId" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Enter ticket ID" required>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-3">Select Compliance Checks</label>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                                <div class="flex items-center">
+                                    <input type="checkbox" id="ipInfringement" name="checks" value="ipInfringement" class="h-5 w-5 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" checked>
+                                    <label for="ipInfringement" class="ml-3 block text-sm text-gray-700">Intellectual Property Infringement</label>
+                                </div>
+                                <div class="flex items-center">
+                                    <input type="checkbox" id="apiLicense" name="checks" value="apiLicense" class="h-5 w-5 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" checked>
+                                    <label for="apiLicense" class="ml-3 block text-sm text-gray-700">API License Violation</label>
+                                </div>
+                                <div class="flex items-center">
+                                    <input type="checkbox" id="httpHeaders" name="checks" value="httpHeaders" class="h-5 w-5 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" checked>
+                                    <label for="httpHeaders" class="ml-3 block text-sm text-gray-700">Incomplete HTTP Response Headers</label>
+                                </div>
+                                <div class="flex items-center">
+                                    <input type="checkbox" id="sellerPermit" name="checks" value="sellerPermit" class="h-5 w-5 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" checked>
+                                    <label for="sellerPermit" class="ml-3 block text-sm text-gray-700">Missing Seller Permit</label>
+                                </div>
+                                <div class="flex items-center">
+                                    <input type="checkbox" id="csrfCompliance" name="checks" value="csrfCompliance" class="h-5 w-5 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" checked>
+                                    <label for="csrfCompliance" class="ml-3 block text-sm text-gray-700">CSRF Compliance Status</label>
+                                </div>
+                                <div class="flex items-center">
+                                    <input type="checkbox" id="gdprCompliance" name="checks" value="gdprCompliance" class="h-5 w-5 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" checked>
+                                    <label for="gdprCompliance" class="ml-3 block text-sm text-gray-700">GDPR Compliance</label>
+                                </div>
+                                <div class="flex items-center">
+                                    <input type="checkbox" id="paymentSecurity" name="checks" value="paymentSecurity" class="h-5 w-5 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" checked>
+                                    <label for="paymentSecurity" class="ml-3 block text-sm text-gray-700">Payment Security</label>
+                                </div>
+                                <div class="flex items-center">
+                                    <input type="checkbox" id="allChecks" class="h-5 w-5 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" checked>
+                                    <label for="allChecks" class="ml-3 block text-sm text-gray-700 font-medium">Select All Checks</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="pt-4">
+                            <button type="submit" class="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 w-full md:w-auto">
+                                <i class="fas fa-search mr-2"></i> Run Analysis
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- Recent Stores Section -->
+                <div id="recentStoresSection" class="hidden bg-white rounded-lg shadow p-4 md:p-6 mb-6">
+                    <h2 class="text-lg font-semibold text-gray-800 mb-4">Recently Analyzed Stores</h2>
+                    <div class="overflow-x-auto -mx-4 md:mx-0">
+                        <div class="min-w-full">
+                            <div class="grid grid-cols-1 md:grid-cols-5 gap-4 p-4 bg-gray-50 rounded-lg font-medium text-sm text-gray-500 uppercase tracking-wider">
+                                <div>Store Name</div>
+                                <div class="hidden md:block">URL</div>
+                                <div>Ticket ID</div>
+                                <div>Score</div>
+                                <div>Date</div>
+                            </div>
+                            <div id="storesTableBody" class="divide-y divide-gray-200">
+                                <!-- Stores will be added here dynamically -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Results Section (Initially Hidden) -->
+                <div id="resultsSection" class="hidden bg-white rounded-lg shadow p-4 md:p-6">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                        <h2 class="text-lg font-semibold text-gray-800">Analysis Results</h2>
+                        <div class="flex flex-wrap gap-2">
+                            <button id="exportPdf" class="px-4 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">
+                                <i class="fas fa-file-pdf mr-2"></i> PDF
+                            </button>
+                            <button id="exportCsv" class="px-4 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">
+                                <i class="fas fa-file-csv mr-2"></i> CSV
+                            </button>
+                            <button id="reanalyze" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700">
+                                <i class="fas fa-redo mr-2"></i> Re-analyze
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <div class="text-sm text-gray-500">Store Name</div>
+                                <div id="resultStoreName" class="font-medium text-lg">-</div>
+                            </div>
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <div class="text-sm text-gray-500">Store URL</div>
+                                <div id="resultStoreUrl" class="font-medium text-lg">-</div>
+                            </div>
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <div class="text-sm text-gray-500">Ticket ID</div>
+                                <div id="resultTicketId" class="font-medium text-lg">-</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="border-b border-gray-200 mb-6 overflow-x-auto">
+                        <div class="flex space-x-4 md:space-x-8 min-w-max">
+                            <button id="tabAll" class="tab-active whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                                All Issues
+                            </button>
+                            <button id="tabCritical" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                                Critical
+                            </button>
+                            <button id="tabWarnings" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                                Warnings
+                            </button>
+                            <button id="tabInfo" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                                Information
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="resultsContainer" class="space-y-4">
+                        <!-- Results will be dynamically inserted here -->
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Settings Modal (Hidden Profile Editor) -->
+    <div id="settingsOverlay" class="overlay"></div>
+    <div id="settingsModal" class="settings-modal fixed inset-0 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800">Edit Profile Settings</h3>
+                    <button id="closeSettings" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                
+                <form id="profileForm" class="space-y-4">
+                    <div>
+                        <label for="editName" class="block text-sm font-medium text-gray-700 mb-2">Your Name</label>
+                        <input type="text" id="editName" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" value="Habeeb" required>
+                    </div>
+                    
+                    <div>
+                        <label for="editEmail" class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+                        <input type="email" id="editEmail" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" value="habeeb@example.com" required>
+                    </div>
+                    
+                    <div>
+                        <label for="editRole" class="block text-sm font-medium text-gray-700 mb-2">Role</label>
+                        <select id="editRole" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                            <option value="admin" selected>Admin</option>
+                            <option value="analyst">Compliance Analyst</option>
+                            <option value="manager">Manager</option>
+                            <option value="viewer">Viewer</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label for="editAvatar" class="block text-sm font-medium text-gray-700 mb-2">Avatar Initials</label>
+                        <input type="text" id="editAvatar" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" maxlength="2" value="HB" required>
+                        <p class="text-xs text-gray-500 mt-2">Enter 2 characters for your avatar initials</p>
+                    </div>
+                    
+                    <div class="pt-4">
+                        <button type="submit" class="w-full bg-indigo-600 text-white px-4 py-3 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Debug: Log when page loads
+            console.log('Page loaded successfully');
+            
+            // Get form elements
+            const analysisForm = document.getElementById('analysisForm');
+            const resultsSection = document.getElementById('resultsSection');
+            const recentStoresSection = document.getElementById('recentStoresSection');
+            const resultsContainer = document.getElementById('resultsContainer');
+            const resultStoreName = document.getElementById('resultStoreName');
+            const resultStoreUrl = document.getElementById('resultStoreUrl');
+            const resultTicketId = document.getElementById('resultTicketId');
+            const allChecks = document.getElementById('allChecks');
+            const storesTableBody = document.getElementById('storesTableBody');
+            
+            // Debug: Log form elements
+            console.log('Form elements found:', {
+                analysisForm: !!analysisForm,
+                resultsSection: !!resultsSection,
+                resultsContainer: !!resultsContainer
+            });
+            
+            // Test form submission immediately
+            if (analysisForm) {
+                analysisForm.addEventListener('submit', function(e) {
+                    console.log('Form submit event triggered');
+                    e.preventDefault();
+                    
+                    // Get form values
+                    const storeName = document.getElementById('storeName').value;
+                    const storeUrl = document.getElementById('storeUrl').value;
+                    const ticketId = document.getElementById('ticketId').value;
+                    
+                    console.log('Form values:', { storeName, storeUrl, ticketId });
+                    
+                    // Validate inputs
+                    if (!storeName || !storeUrl || !ticketId) {
+                        alert('Please fill in all required fields: Store Name, Store URL, and Ticket ID.');
+                        return;
+                    }
+                    
+                    // Validate URL format
+                    try {
+                        new URL(storeUrl);
+                    } catch (e) {
+                        alert('Please enter a valid URL starting with http:// or https://');
+                        return;
+                    }
+                    
+                    // Show success message
+                    alert(`Analysis started for ${storeName}! Processing results...`);
+                    
+                    // Simulate analysis delay
+                    setTimeout(() => {
+                        showResults(storeName, storeUrl, ticketId);
+                    }, 1000);
+                });
+            }
+            
+            function showResults(storeName, storeUrl, ticketId) {
+                // Update result headers
+                resultStoreName.textContent = storeName;
+                resultStoreUrl.textContent = storeUrl;
+                resultTicketId.textContent = ticketId;
+                
+                // Clear previous results
+                resultsContainer.innerHTML = '';
+                
+                // Sample results data
+                const sampleResults = [
+                    {
+                        title: "API License Violation",
+                        severity: "high",
+                        issues: [
+                            {
+                                title: "Unauthorized API Usage",
+                                description: "Store is accessing Shopify APIs without proper authorization.",
+                                risk: "High",
+                                recommendation: "Implement proper authentication."
+                            },
+                            {
+                                title: "Data Scraping Detected",
+                                description: "Automated data extraction detected without proper API credentials.",
+                                risk: "High",
+                                recommendation: "Stop scraping activities immediately."
+                            }
+                        ]
+                    },
+                    {
+                        title: "CSRF Compliance Status",
+                        severity: "high",
+                        issues: [
+                            {
+                                title: "Confidentiality Breach Risk",
+                                description: "CSRF vulnerability detected - allows unauthorized actions.",
+                                risk: "High",
+                                recommendation: "Implement anti-CSRF tokens."
+                            }
+                        ]
+                    },
+                    {
+                        title: "Intellectual Property Infringement",
+                        severity: "none",
+                        issues: []
+                    }
+                ];
+                
+                // Generate results
+                sampleResults.forEach(result => {
+                    const resultCard = document.createElement('div');
+                    resultCard.className = `analysis-card bg-white rounded-lg shadow-sm overflow-hidden ${result.severity === 'high' ? 'severity-high' : result.severity === 'medium' ? 'severity-medium' : 'no-issues-card'}`;
+                    
+                    let detailsHtml = '';
+                    
+                    if (result.issues.length > 0) {
+                        result.issues.forEach(issue => {
+                            detailsHtml += `
+                                <div class="p-4 border-b border-gray-100">
+                                    <div class="flex justify-between items-start mb-2">
+                                        <h4 class="font-medium text-gray-800">${issue.title}</h4>
+                                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                            ${issue.risk} Risk
+                                        </span>
+                                    </div>
+                                    <p class="text-sm text-gray-600 mb-3">${issue.description}</p>
+                                    <div class="bg-blue-50 p-3 rounded-md">
+                                        <h5 class="text-xs font-semibold text-blue-800 uppercase tracking-wider mb-1">Recommendation</h5>
+                                        <p class="text-sm text-blue-700">${issue.recommendation}</p>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        
+                        resultCard.innerHTML = `
+                            <div class="px-4 py-3 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
+                                <h3 class="font-semibold text-gray-800">${result.title}</h3>
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                    Critical (${result.issues.length} issues)
+                                </span>
+                            </div>
+                            ${detailsHtml}
+                        `;
+                    } else {
+                        resultCard.innerHTML = `
+                            <div class="px-4 py-3 bg-green-50 border-b border-green-200 flex justify-between items-center">
+                                <h3 class="font-semibold text-gray-800">${result.title}</h3>
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    <i class="fas fa-check-circle mr-1"></i> Compliant
+                                </span>
+                            </div>
+                            <div class="p-6 text-center">
+                                <div class="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
+                                    <i class="fas fa-check text-green-600 text-2xl"></i>
+                                </div>
+                                <h4 class="font-medium text-gray-800 mb-2">No Issues Found</h4>
+                                <p class="text-sm text-gray-600">This compliance area passes all security checks.</p>
+                            </div>
+                        `;
+                    }
+                    
+                    resultsContainer.appendChild(resultCard);
+                });
+                
+                // Update compliance score to 39%
+                document.getElementById('complianceScore').textContent = '39%';
+                document.getElementById('complianceScore').className = 'compliance-score score-low';
+                document.getElementById('scoreBar').style.width = '39%';
+                document.getElementById('scoreBar').className = 'h-2 rounded-full bg-red-500';
+                document.getElementById('criticalIssues').textContent = '7';
+                document.getElementById('warningIssues').textContent = '5';
+                document.getElementById('totalIssues').textContent = '12';
+                
+                // Show results section and hide recent stores
+                resultsSection.classList.remove('hidden');
+                recentStoresSection.classList.add('hidden');
+                
+                // Scroll to results
+                resultsSection.scrollIntoView({ behavior: 'smooth' });
+            }
+            
+            // Mobile menu functionality
+            const openMobileMenu = document.getElementById('openMobileMenu');
+            const closeMobileMenu = document.getElementById('closeMobileMenu');
+            const mobileMenu = document.getElementById('mobileMenu');
+            const mobileOverlay = document.getElementById('mobileOverlay');
+            
+            if (openMobileMenu) {
+                openMobileMenu.addEventListener('click', () => {
+                    mobileMenu.classList.add('open');
+                    mobileOverlay.classList.add('active');
+                    document.body.style.overflow = 'hidden';
+                });
+            }
+            
+            if (closeMobileMenu) {
+                closeMobileMenu.addEventListener('click', () => {
+                    mobileMenu.classList.remove('open');
+                    mobileOverlay.classList.remove('active');
+                    document.body.style.overflow = '';
+                });
+            }
+            
+            if (mobileOverlay) {
+                mobileOverlay.addEventListener('click', () => {
+                    mobileMenu.classList.remove('open');
+                    mobileOverlay.classList.remove('active');
+                    document.body.style.overflow = '';
+                });
+            }
+            
+            // Settings modal functionality
+            const openSettingsHeader = document.getElementById('openSettingsHeader');
+            const closeSettings = document.getElementById('closeSettings');
+            const settingsModal = document.getElementById('settingsModal');
+            const settingsOverlay = document.getElementById('settingsOverlay');
+            const profileForm = document.getElementById('profileForm');
+            
+            if (openSettingsHeader) {
+                openSettingsHeader.addEventListener('click', () => {
+                    settingsModal.classList.add('active');
+                    settingsOverlay.classList.add('active');
+                    document.body.style.overflow = 'hidden';
+                });
+            }
+            
+            if (closeSettings) {
+                closeSettings.addEventListener('click', () => {
+                    settingsModal.classList.remove('active');
+                    settingsOverlay.classList.remove('active');
+                    document.body.style.overflow = '';
+                });
+            }
+            
+            if (settingsOverlay) {
+                settingsOverlay.addEventListener('click', () => {
+                    settingsModal.classList.remove('active');
+                    settingsOverlay.classList.remove('active');
+                    document.body.style.overflow = '';
+                });
+            }
+            
+            if (profileForm) {
+                profileForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    const newName = document.getElementById('editName').value;
+                    const newAvatar = document.getElementById('editAvatar').value;
+                    
+                    // Update name in all locations
+                    document.getElementById('welcomeName').textContent = newName;
+                    document.getElementById('desktopUserName').textContent = newName;
+                    document.getElementById('mobileUserName').textContent = newName;
+                    
+                    // Update avatar initials
+                    document.getElementById('desktopAvatar').textContent = newAvatar;
+                    document.getElementById('mobileAvatar').textContent = newAvatar;
+                    
+                    // Show success message
+                    alert(`Profile updated successfully! Welcome ${newName}.`);
+                    
+                    settingsModal.classList.remove('active');
+                    settingsOverlay.classList.remove('active');
+                    document.body.style.overflow = '';
+                });
+            }
+            
+            // Select all checks functionality
+            if (allChecks) {
+                allChecks.addEventListener('change', function() {
+                    const checkboxes = document.querySelectorAll('input[name="checks"]');
+                    checkboxes.forEach(checkbox => {
+                        checkbox.checked = allChecks.checked;
+                    });
+                });
+            }
+            
+            // Re-analyze button
+            const reanalyzeBtn = document.getElementById('reanalyze');
+            if (reanalyzeBtn) {
+                reanalyzeBtn.addEventListener('click', function() {
+                    resultsSection.classList.add('hidden');
+                    
+                    // Reset dashboard to 92%
+                    document.getElementById('complianceScore').textContent = '92%';
+                    document.getElementById('complianceScore').className = 'compliance-score score-high';
+                    document.getElementById('scoreBar').style.width = '92%';
+                    document.getElementById('scoreBar').className = 'h-2 rounded-full bg-green-500';
+                    document.getElementById('criticalIssues').textContent = '0';
+                    document.getElementById('warningIssues').textContent = '0';
+                    document.getElementById('totalIssues').textContent = '0';
+                    
+                    // Clear form
+                    document.getElementById('storeName').value = '';
+                    document.getElementById('storeUrl').value = '';
+                    document.getElementById('ticketId').value = '';
+                    
+                    // Scroll to form
+                    document.getElementById('analysisForm').scrollIntoView({ behavior: 'smooth' });
+                });
+            }
+            
+            // Export buttons
+            const exportPdf = document.getElementById('exportPdf');
+            const exportCsv = document.getElementById('exportCsv');
+            
+            if (exportPdf) {
+                exportPdf.addEventListener('click', function() {
+                    alert('Generating PDF report...');
+                });
+            }
+            
+            if (exportCsv) {
+                exportCsv.addEventListener('click', function() {
+                    alert('Exporting CSV file...');
+                });
+            }
+            
+            // Tab switching
+            const tabAll = document.getElementById('tabAll');
+            const tabCritical = document.getElementById('tabCritical');
+            const tabWarnings = document.getElementById('tabWarnings');
+            const tabInfo = document.getElementById('tabInfo');
+            
+            function setupTabSwitching() {
+                if (!tabAll) return;
+                
+                tabAll.addEventListener('click', () => switchTab('all'));
+                tabCritical.addEventListener('click', () => switchTab('critical'));
+                tabWarnings.addEventListener('click', () => switchTab('warnings'));
+                tabInfo.addEventListener('click', () => switchTab('info'));
+            }
+            
+            function switchTab(tabName) {
+                // Update active tab styling
+                [tabAll, tabCritical, tabWarnings, tabInfo].forEach(tab => {
+                    if (tab) {
+                        tab.classList.remove('tab-active', 'text-indigo-600', 'border-indigo-500');
+                        tab.classList.add('text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
+                    }
+                });
+                
+                const activeTab = document.getElementById('tab' + tabName.charAt(0).toUpperCase() + tabName.slice(1));
+                if (activeTab) {
+                    activeTab.classList.add('tab-active', 'text-indigo-600', 'border-indigo-500');
+                    activeTab.classList.remove('text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
+                }
+            }
+            
+            setupTabSwitching();
+            
+            // Test: Add some sample store data
+            function loadSampleData() {
+                const sampleStores = [
+                    { name: "Fashion Hub", url: "https://fashionhub.com", ticketId: "TKT-001", score: 92, date: "2024-01-15", status: "Compliant" },
+                    { name: "Tech Gadgets", url: "https://techgadgets.com", ticketId: "TKT-002", score: 39, date: "2024-01-14", status: "Non-Compliant" }
+                ];
+                
+                storesTableBody.innerHTML = '';
+                
+                sampleStores.forEach(store => {
+                    const storeDiv = document.createElement('div');
+                    storeDiv.className = 'grid grid-cols-1 md:grid-cols-5 gap-4 p-4 hover:bg-gray-50';
+                    storeDiv.innerHTML = `
+                        <div class="font-medium text-gray-900">${store.name}</div>
+                        <div class="hidden md:block text-sm text-gray-500 truncate">${store.url}</div>
+                        <div class="text-sm text-gray-500">${store.ticketId}</div>
+                        <div>
+                            <span class="px-2 py-1 text-xs font-semibold rounded-full ${store.score >= 80 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                                ${store.score}%
+                            </span>
+                        </div>
+                        <div class="text-sm text-gray-500">${store.date}</div>
+                    `;
+                    storesTableBody.appendChild(storeDiv);
+                });
+                
+                recentStoresSection.classList.remove('hidden');
+            }
+            
+            // Load sample data on page load
+            loadSampleData();
+            
+            // Add event listeners to form inputs to test they work
+            const formInputs = document.querySelectorAll('#analysisForm input');
+            formInputs.forEach(input => {
+                input.addEventListener('input', function() {
+                    console.log('Input changed:', this.id, this.value);
+                });
+            });
+            
+            console.log('All JavaScript initialized successfully');
+        });
+    </script>
+</body>
+</html>
