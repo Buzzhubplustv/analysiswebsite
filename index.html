@@ -100,6 +100,42 @@
             border-left: 4px solid var(--success);
         }
         
+        /* Modal styles */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        
+        .modal-overlay.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            transform: scale(0.9);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+        
+        .modal.active {
+            transform: scale(1);
+            opacity: 1;
+        }
+        
         /* Mobile responsive improvements */
         @media (max-width: 768px) {
             .compliance-score {
@@ -130,6 +166,11 @@
                 width: 3rem;
                 height: 3rem;
             }
+            
+            .modal {
+                width: 95%;
+                margin: 1rem;
+            }
         }
     </style>
 </head>
@@ -145,10 +186,10 @@
         <div class="p-4 border-b border-gray-800">
             <div class="flex items-center space-x-3">
                 <div class="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center">
-                    <span class="text-white font-medium">HB</span>
+                    <span id="sidebarAvatar" class="text-white font-medium">HB</span>
                 </div>
                 <div>
-                    <div class="font-medium">Habeeb</div>
+                    <div id="sidebarUserName" class="font-medium">Habeeb</div>
                     <div class="text-xs text-gray-400">Admin</div>
                 </div>
             </div>
@@ -186,15 +227,22 @@
                     <button class="md:hidden mr-4 text-gray-500">
                         <i class="fas fa-bars"></i>
                     </button>
-                    <h1 class="text-lg md:text-xl font-semibold text-gray-800">Welcome Habeeb...</h1>
+                    <h1 class="text-lg md:text-xl font-semibold text-gray-800">Welcome <span id="welcomeName">Habeeb</span>...</h1>
                 </div>
                 <div class="flex items-center space-x-4">
-                    <button class="text-gray-500 hover:text-gray-700">
+                    <button class="text-gray-500 hover:text-gray-700 relative">
                         <i class="fas fa-bell"></i>
+                        <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">3</span>
                     </button>
                     <button class="text-gray-500 hover:text-gray-700">
                         <i class="fas fa-question-circle"></i>
                     </button>
+                    <!-- User Profile Icon - Now includes Edit Profile functionality -->
+                    <div class="relative">
+                        <button id="userProfileBtn" class="text-gray-500 hover:text-gray-700">
+                            <i class="fas fa-user-cog"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
         </header>
@@ -384,6 +432,66 @@
         </main>
     </div>
 
+    <!-- Edit Profile Modal -->
+    <div id="profileModalOverlay" class="modal-overlay">
+        <div id="profileModal" class="modal">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-semibold text-gray-800">Edit Profile</h2>
+                    <button id="closeProfileModal" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-lg"></i>
+                    </button>
+                </div>
+                
+                <form id="profileForm" class="space-y-4">
+                    <div>
+                        <label for="editName" class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                        <input type="text" id="editName" 
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                               value="Habeeb"
+                               required>
+                    </div>
+                    
+                    <div>
+                        <label for="editEmail" class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+                        <input type="email" id="editEmail" 
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                               value="habeeb@example.com"
+                               required>
+                    </div>
+                    
+                    <div>
+                        <label for="editRole" class="block text-sm font-medium text-gray-700 mb-2">Role</label>
+                        <select id="editRole" 
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                            <option value="admin" selected>Admin</option>
+                            <option value="analyst">Compliance Analyst</option>
+                            <option value="manager">Manager</option>
+                            <option value="viewer">Viewer</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label for="editAvatar" class="block text-sm font-medium text-gray-700 mb-2">Avatar Initials</label>
+                        <input type="text" id="editAvatar" 
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                               maxlength="2"
+                               value="HB"
+                               required>
+                        <p class="text-xs text-gray-500 mt-2">Enter 2 characters for your avatar initials</p>
+                    </div>
+                    
+                    <div class="pt-4">
+                        <button type="submit" 
+                                class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-200">
+                            Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const analysisForm = document.getElementById('analysisForm');
@@ -393,6 +501,13 @@
             const resultStoreUrl = document.getElementById('resultStoreUrl');
             const resultTicketId = document.getElementById('resultTicketId');
             const allChecks = document.getElementById('allChecks');
+            
+            // Profile modal elements
+            const userProfileBtn = document.getElementById('userProfileBtn');
+            const profileModalOverlay = document.getElementById('profileModalOverlay');
+            const profileModal = document.getElementById('profileModal');
+            const closeProfileModal = document.getElementById('closeProfileModal');
+            const profileForm = document.getElementById('profileForm');
             
             // Tab switching
             const tabAll = document.getElementById('tabAll');
@@ -471,6 +586,54 @@
             const checkboxes = document.querySelectorAll('input[name="checks"]');
             checkboxes.forEach(checkbox => {
                 checkbox.checked = true;
+            });
+            
+            // Profile Modal Functions
+            function openProfileModal() {
+                profileModalOverlay.classList.add('active');
+                setTimeout(() => {
+                    profileModal.classList.add('active');
+                }, 10);
+            }
+            
+            function closeProfileModalFunc() {
+                profileModal.classList.remove('active');
+                setTimeout(() => {
+                    profileModalOverlay.classList.remove('active');
+                }, 300);
+            }
+            
+            // Event listeners for profile modal
+            userProfileBtn.addEventListener('click', openProfileModal);
+            closeProfileModal.addEventListener('click', closeProfileModalFunc);
+            
+            // Close modal when clicking on overlay
+            profileModalOverlay.addEventListener('click', function(e) {
+                if (e.target === profileModalOverlay) {
+                    closeProfileModalFunc();
+                }
+            });
+            
+            // Profile form submission
+            profileForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const newName = document.getElementById('editName').value;
+                const newAvatar = document.getElementById('editAvatar').value;
+                const newEmail = document.getElementById('editEmail').value;
+                const newRole = document.getElementById('editRole').value;
+                
+                // Update name in all locations
+                document.getElementById('welcomeName').textContent = newName;
+                document.getElementById('sidebarUserName').textContent = newName;
+                
+                // Update avatar initials
+                document.getElementById('sidebarAvatar').textContent = newAvatar;
+                
+                // Show success message
+                alert(`Profile updated successfully! Welcome ${newName}.`);
+                
+                closeProfileModalFunc();
             });
             
             // Select all checks functionality
