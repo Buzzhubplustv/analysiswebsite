@@ -100,6 +100,38 @@
             border-left: 4px solid var(--success);
         }
         
+        /* Mobile menu styles */
+        .mobile-menu {
+            position: fixed;
+            top: 0;
+            left: -100%;
+            width: 280px;
+            height: 100vh;
+            background: #1f2937;
+            transition: left 0.3s ease;
+            z-index: 1001;
+            overflow-y: auto;
+        }
+        
+        .mobile-menu.active {
+            left: 0;
+        }
+        
+        .mobile-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        
+        .mobile-overlay.active {
+            display: block;
+        }
+        
         /* Modal styles */
         .modal-overlay {
             display: none;
@@ -175,7 +207,60 @@
     </style>
 </head>
 <body class="flex h-screen overflow-hidden">
-    <!-- Sidebar -->
+    <!-- Mobile Menu -->
+    <div id="mobileMenu" class="mobile-menu">
+        <div class="p-4 border-b border-gray-800">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 rounded bg-indigo-500 flex items-center justify-center">
+                        <i class="fas fa-chart-bar text-white"></i>
+                    </div>
+                    <span class="text-lg font-bold text-white">Analytics Board</span>
+                </div>
+                <button id="closeMobileMenu" class="text-gray-400 hover:text-white">
+                    <i class="fas fa-times text-lg"></i>
+                </button>
+            </div>
+        </div>
+        <div class="p-4 border-b border-gray-800">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center">
+                    <span id="mobileAvatar" class="text-white font-medium">HB</span>
+                </div>
+                <div>
+                    <div id="mobileUserName" class="font-medium text-white">Habeeb</div>
+                    <div class="text-xs text-gray-400">Admin</div>
+                </div>
+            </div>
+        </div>
+        <nav class="flex-1 p-4 space-y-2">
+            <a href="#" class="flex items-center py-3 px-3 rounded bg-gray-800 text-white">
+                <i class="fas fa-tachometer-alt mr-3"></i> Dashboard
+            </a>
+            <a href="#" class="flex items-center py-3 px-3 rounded text-gray-400 hover:bg-gray-800 hover:text-white">
+                <i class="fas fa-store mr-3"></i> Stores
+            </a>
+            <a href="#" class="flex items-center py-3 px-3 rounded text-gray-400 hover:bg-gray-800 hover:text-white">
+                <i class="fas fa-shield-alt mr-3"></i> Compliance
+            </a>
+            <a href="#" class="flex items-center py-3 px-3 rounded text-gray-400 hover:bg-gray-800 hover:text-white">
+                <i class="fas fa-chart-line mr-3"></i> Analytics
+            </a>
+            <a href="#" class="flex items-center py-3 px-3 rounded text-gray-400 hover:bg-gray-800 hover:text-white">
+                <i class="fas fa-cog mr-3"></i> Settings
+            </a>
+        </nav>
+        <div class="p-4 border-t border-gray-800">
+            <button class="w-full flex items-center py-3 px-3 rounded text-gray-400 hover:bg-gray-800 hover:text-white">
+                <i class="fas fa-sign-out-alt mr-3"></i> Logout
+            </button>
+        </div>
+    </div>
+    
+    <!-- Mobile Overlay -->
+    <div id="mobileOverlay" class="mobile-overlay"></div>
+
+    <!-- Desktop Sidebar -->
     <div class="sidebar bg-gray-900 text-white w-64 flex-shrink-0 hidden md:flex flex-col">
         <div class="p-4 border-b border-gray-800">
             <div class="flex items-center space-x-3">
@@ -224,8 +309,8 @@
         <header class="bg-white border-b border-gray-200 flex-shrink-0">
             <div class="flex items-center justify-between px-4 md:px-6 py-3">
                 <div class="flex items-center">
-                    <button class="md:hidden mr-4 text-gray-500">
-                        <i class="fas fa-bars"></i>
+                    <button id="openMobileMenu" class="md:hidden mr-4 text-gray-500">
+                        <i class="fas fa-bars text-xl"></i>
                     </button>
                     <h1 class="text-lg md:text-xl font-semibold text-gray-800">Welcome <span id="welcomeName">Habeeb</span>...</h1>
                 </div>
@@ -359,6 +444,10 @@
                                     <label for="csrfCompliance" class="ml-2 block text-sm text-gray-700">CSRF Compliance Status</label>
                                 </div>
                                 <div class="flex items-center">
+                                    <input type="checkbox" id="spavCompliance" name="checks" value="spavCompliance" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" checked>
+                                    <label for="spavCompliance" class="ml-2 block text-sm text-gray-700">SPAV Compliance Status</label>
+                                </div>
+                                <div class="flex items-center">
                                     <input type="checkbox" id="allChecks" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" checked>
                                     <label for="allChecks" class="ml-2 block text-sm text-gray-700 font-medium">Select All Checks</label>
                                 </div>
@@ -379,7 +468,7 @@
                         <h2 class="text-lg font-semibold text-gray-800">Analysis Results</h2>
                         <div class="flex flex-wrap gap-2">
                             <button id="exportPdf" class="px-3 py-1 border border-gray-300 rounded-md text-sm hover:bg-gray-50">
-                                <i class="fas fa-file-pdf mr-1"></i> PDF
+                                <i class="fas fa-file-pdf mr-1"></i> Download PDF
                             </button>
                             <button id="exportCsv" class="px-3 py-1 border border-gray-300 rounded-md text-sm hover:bg-gray-50">
                                 <i class="fas fa-file-csv mr-1"></i> CSV
@@ -502,6 +591,12 @@
             const resultTicketId = document.getElementById('resultTicketId');
             const allChecks = document.getElementById('allChecks');
             
+            // Mobile menu elements
+            const openMobileMenu = document.getElementById('openMobileMenu');
+            const closeMobileMenu = document.getElementById('closeMobileMenu');
+            const mobileMenu = document.getElementById('mobileMenu');
+            const mobileOverlay = document.getElementById('mobileOverlay');
+            
             // Profile modal elements
             const userProfileBtn = document.getElementById('userProfileBtn');
             const profileModalOverlay = document.getElementById('profileModalOverlay');
@@ -515,7 +610,7 @@
             const tabWarnings = document.getElementById('tabWarnings');
             const tabInfo = document.getElementById('tabInfo');
             
-            // Sample data for results - Updated based on your requirements
+            // Sample data for results - Updated with SPAV
             const sampleResults = {
                 ipInfringement: {
                     title: "Intellectual Property Infringement",
@@ -579,6 +674,36 @@
                             recommendation: "Add Content-Security-Policy headers, implement double-submit cookie pattern, and conduct security audit of all form submissions and AJAX requests."
                         }
                     ]
+                },
+                spavCompliance: {
+                    title: "SPAV Compliance Status",
+                    severity: "high",
+                    details: [
+                        {
+                            title: "Sales Permit Authorization Validation Failure",
+                            description: "SPAV validation misalignment detected - store's checkout configuration does not align with required authorization framework for active selling regions. This backend validation process ensures checkout transactions are processed accurately and within platform standards.",
+                            risk: "High",
+                            recommendation: "Immediately review regional sales configurations and ensure business origin/address data matches authorization records. Disable sales settings in unsupported regions and verify checkout consistency across all active locations."
+                        },
+                        {
+                            title: "Checkout Stability Compromised",
+                            description: "SPAV misalignment leads to inconsistent checkout calculations, unexpected final amounts during payment, and increased payment authorization failures. This directly impacts conversion rates and customer trust.",
+                            risk: "High",
+                            recommendation: "Conduct comprehensive checkout audit across all devices and locations. Implement regional authorization verification and monitor checkout behavior for inconsistencies."
+                        },
+                        {
+                            title: "Region-Specific Authorization Issues",
+                            description: "Sales configurations enabled in regions without verified authorization credentials. Legacy configurations may remain active after operational changes, causing regional checkout errors and payment failures.",
+                            risk: "Medium",
+                            recommendation: "Audit all regional checkout settings and ensure they align with current business operations. Remove outdated configurations and verify authorization scope matches sales regions."
+                        },
+                        {
+                            title: "Payment Authorization Instability",
+                            description: "SPAV validation issues increase abandoned checkout rates due to payment processing inconsistencies. This silent issue affects checkout reliability while appearing technical on the surface.",
+                            risk: "High",
+                            recommendation: "Regularly monitor checkout performance metrics and implement proactive SPAV alignment checks. Address authorization misalignment before it impacts customer conversion."
+                        }
+                    ]
                 }
             };
             
@@ -586,6 +711,29 @@
             const checkboxes = document.querySelectorAll('input[name="checks"]');
             checkboxes.forEach(checkbox => {
                 checkbox.checked = true;
+            });
+            
+            // Mobile Menu Functions
+            function openMobileMenuFunc() {
+                mobileMenu.classList.add('active');
+                mobileOverlay.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
+            
+            function closeMobileMenuFunc() {
+                mobileMenu.classList.remove('active');
+                mobileOverlay.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+            
+            // Event listeners for mobile menu
+            openMobileMenu.addEventListener('click', openMobileMenuFunc);
+            closeMobileMenu.addEventListener('click', closeMobileMenuFunc);
+            mobileOverlay.addEventListener('click', closeMobileMenuFunc);
+            
+            // Close mobile menu when clicking on menu items
+            document.querySelectorAll('#mobileMenu a').forEach(link => {
+                link.addEventListener('click', closeMobileMenuFunc);
             });
             
             // Profile Modal Functions
@@ -626,9 +774,11 @@
                 // Update name in all locations
                 document.getElementById('welcomeName').textContent = newName;
                 document.getElementById('sidebarUserName').textContent = newName;
+                document.getElementById('mobileUserName').textContent = newName;
                 
                 // Update avatar initials
                 document.getElementById('sidebarAvatar').textContent = newAvatar;
+                document.getElementById('mobileAvatar').textContent = newAvatar;
                 
                 // Show success message
                 alert(`Profile updated successfully! Welcome ${newName}.`);
@@ -742,7 +892,7 @@
                     }
                 });
                 
-                // Update dashboard to show 39% with 12 issues
+                // Update dashboard to show 39% with increased issues (now includes SPAV)
                 updateDashboardTo39Percent();
                 
                 // Show results section
@@ -754,7 +904,7 @@
                 }, 100);
             });
             
-            // Update dashboard to show 39% with 12 issues
+            // Update dashboard to show 39% with increased issues (now includes SPAV)
             function updateDashboardTo39Percent() {
                 // Update compliance score to 39%
                 const scoreElement = document.getElementById('complianceScore');
@@ -768,10 +918,10 @@
                     scoreBar.className = 'bg-red-500 h-2 rounded-full';
                 }
                 
-                // Update issue counts to 12 total (7 critical, 5 warnings)
-                document.getElementById('criticalIssues').textContent = '7';
+                // Update issue counts to reflect SPAV addition (now 16 total: 11 critical, 5 warnings)
+                document.getElementById('criticalIssues').textContent = '11';
                 document.getElementById('warningIssues').textContent = '5';
-                document.getElementById('totalIssues').textContent = '12';
+                document.getElementById('totalIssues').textContent = '16';
                 
                 // Update icon colors
                 const criticalIcon = document.querySelector('.bg-red-100');
@@ -823,13 +973,254 @@
             tabWarnings.addEventListener('click', () => switchTab(tabWarnings));
             tabInfo.addEventListener('click', () => switchTab(tabInfo));
             
-            // Export buttons
+            // PDF Export Functionality
             document.getElementById('exportPdf').addEventListener('click', function() {
-                alert('PDF export functionality would generate a comprehensive compliance report including CSRF analysis');
+                // Get store details
+                const storeName = document.getElementById('resultStoreName').textContent;
+                const storeUrl = document.getElementById('resultStoreUrl').textContent;
+                const ticketId = document.getElementById('resultTicketId').textContent;
+                
+                if (storeName === '-' || storeUrl === '-' || ticketId === '-') {
+                    alert('Please run an analysis first to generate a report.');
+                    return;
+                }
+                
+                // Create PDF content
+                const pdfContent = `
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <style>
+                            body { font-family: Arial, sans-serif; margin: 40px; }
+                            .header { text-align: center; margin-bottom: 30px; }
+                            .logo { font-size: 24px; font-weight: bold; color: #333; }
+                            .title { font-size: 28px; margin: 20px 0; color: #1a202c; }
+                            .section { margin: 25px 0; }
+                            .section-title { font-size: 18px; font-weight: bold; color: #2d3748; border-bottom: 2px solid #4a5568; padding-bottom: 8px; margin-bottom: 15px; }
+                            .info-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 25px; }
+                            .info-item { background: #f7fafc; padding: 15px; border-radius: 5px; }
+                            .info-label { font-size: 12px; color: #718096; text-transform: uppercase; margin-bottom: 5px; }
+                            .info-value { font-size: 16px; font-weight: bold; color: #2d3748; }
+                            .summary-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 15px; margin-bottom: 30px; }
+                            .summary-card { text-align: center; padding: 20px; border-radius: 8px; }
+                            .summary-value { font-size: 32px; font-weight: bold; margin: 10px 0; }
+                            .issue-card { border: 1px solid #e2e8f0; border-radius: 5px; padding: 15px; margin: 15px 0; }
+                            .issue-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+                            .issue-title { font-weight: bold; font-size: 16px; }
+                            .issue-risk { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+                            .risk-high { background: #fed7d7; color: #c53030; }
+                            .risk-medium { background: #feebc8; color: #c05621; }
+                            .spav-warning { background: #fffaf0; border-left: 4px solid #d69e2e; padding: 15px; margin: 15px 0; border-radius: 4px; }
+                            .footer { margin-top: 40px; text-align: center; color: #718096; font-size: 12px; border-top: 1px solid #e2e8f0; padding-top: 20px; }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="header">
+                            <div class="logo">Shopify Compliance Analyzer</div>
+                            <div class="title">Compliance Analysis Report</div>
+                            <div>Generated: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}</div>
+                        </div>
+                        
+                        <div class="section">
+                            <div class="section-title">Store Information</div>
+                            <div class="info-grid">
+                                <div class="info-item">
+                                    <div class="info-label">Store Name</div>
+                                    <div class="info-value">${storeName}</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">Store URL</div>
+                                    <div class="info-value">${storeUrl}</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">Ticket ID</div>
+                                    <div class="info-value">${ticketId}</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="section">
+                            <div class="section-title">Compliance Summary</div>
+                            <div class="summary-grid">
+                                <div class="summary-card" style="background: #f0fff4;">
+                                    <div>Overall Score</div>
+                                    <div class="summary-value" style="color: #38a169;">39%</div>
+                                    <div>Compliance Level</div>
+                                </div>
+                                <div class="summary-card" style="background: #fff5f5;">
+                                    <div>Critical Issues</div>
+                                    <div class="summary-value" style="color: #e53e3e;">11</div>
+                                    <div>Requires Immediate Action</div>
+                                </div>
+                                <div class="summary-card" style="background: #fffaf0;">
+                                    <div>Warnings</div>
+                                    <div class="summary-value" style="color: #d69e2e;">5</div>
+                                    <div>Needs Attention Soon</div>
+                                </div>
+                                <div class="summary-card" style="background: #ebf8ff;">
+                                    <div>Total Issues</div>
+                                    <div class="summary-value" style="color: #3182ce;">16</div>
+                                    <div>All Identified Problems</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="section">
+                            <div class="section-title">Detailed Findings</div>
+                            <div>
+                                <div class="issue-card">
+                                    <div class="issue-header">
+                                        <div class="issue-title">API License Violation</div>
+                                        <div class="issue-risk risk-high">Critical (3 issues)</div>
+                                    </div>
+                                    <div style="margin-bottom: 15px;">
+                                        <strong>Unauthorized API Usage:</strong> Store is accessing Shopify APIs without proper authorization or exceeding rate limits in violation of Section 4.3 of the API License Agreement.
+                                    </div>
+                                    <div style="margin-bottom: 15px;">
+                                        <strong>Data Scraping Detected:</strong> Automated data extraction from Shopify platform detected without proper API credentials, violating Terms of Service.
+                                    </div>
+                                    <div>
+                                        <strong>Third-Party Integration Violation:</strong> Unapproved third-party integrations accessing restricted endpoints, potentially exposing sensitive customer data.
+                                    </div>
+                                </div>
+                                
+                                <div class="issue-card">
+                                    <div class="issue-header">
+                                        <div class="issue-title">CSRF Compliance Status</div>
+                                        <div class="issue-risk risk-high">Critical (3 issues)</div>
+                                    </div>
+                                    <div style="margin-bottom: 15px;">
+                                        <strong>Confidentiality Breach Risk:</strong> CSRF vulnerability detected - allows unauthorized actions on behalf of authenticated users.
+                                    </div>
+                                    <div style="margin-bottom: 15px;">
+                                        <strong>Shopify ToS Violation:</strong> Active CSRF vulnerability violates Shopify Terms of Service Confidentiality clause (Section 10.1).
+                                    </div>
+                                    <div>
+                                        <strong>Data Protection Non-Compliance:</strong> CSRF flaws expose sensitive data to potential extraction via unauthorized actions.
+                                    </div>
+                                </div>
+                                
+                                <div class="issue-card">
+                                    <div class="issue-header">
+                                        <div class="issue-title">SPAV Compliance Status</div>
+                                        <div class="issue-risk risk-high">Critical (4 issues)</div>
+                                    </div>
+                                    <div class="spav-warning">
+                                        <strong>⚠️ IMPORTANT:</strong> SPAV (Sales Permit Authorization Validation) issues directly impact checkout stability and payment processing reliability.
+                                    </div>
+                                    <div style="margin-bottom: 15px;">
+                                        <strong>Sales Permit Authorization Validation Failure:</strong> Store's checkout configuration does not align with required authorization framework for active selling regions.
+                                    </div>
+                                    <div style="margin-bottom: 15px;">
+                                        <strong>Checkout Stability Compromised:</strong> Leads to inconsistent checkout calculations, unexpected final amounts during payment, and increased payment authorization failures.
+                                    </div>
+                                    <div style="margin-bottom: 15px;">
+                                        <strong>Region-Specific Authorization Issues:</strong> Sales configurations enabled in regions without verified authorization credentials.
+                                    </div>
+                                    <div>
+                                        <strong>Payment Authorization Instability:</strong> Increases abandoned checkout rates due to payment processing inconsistencies.
+                                    </div>
+                                </div>
+                                
+                                <div style="text-align: center; padding: 20px; background: #f0fff4; border-radius: 5px; margin: 15px 0;">
+                                    <strong>Note:</strong> Intellectual Property Infringement, Incomplete HTTP Response Headers, and Missing Seller Permit checks passed with no issues found.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="section">
+                            <div class="section-title">Recommendations</div>
+                            <div style="padding: 15px; background: #ebf8ff; border-radius: 5px;">
+                                <ol style="margin: 0; padding-left: 20px;">
+                                    <li>Immediately cease unauthorized API calls and implement proper authentication</li>
+                                    <li>Stop all scraping activities and migrate to official Shopify APIs</li>
+                                    <li>Implement CSRF protection middleware and validate origin headers</li>
+                                    <li>Add Content-Security-Policy headers and implement double-submit cookie pattern</li>
+                                    <li><strong>Urgent:</strong> Review regional sales configurations and ensure business origin/address data matches authorization records</li>
+                                    <li>Disable sales settings in unsupported regions and verify checkout consistency</li>
+                                    <li>Conduct comprehensive checkout audit across all devices and locations</li>
+                                    <li>Monitor checkout performance metrics for SPAV-related inconsistencies</li>
+                                </ol>
+                            </div>
+                        </div>
+                        
+                        <div class="footer">
+                            This report was generated by Shopify Compliance Analyzer. For questions or support, contact your compliance administrator.
+                        </div>
+                    </body>
+                    </html>
+                `;
+                
+                // Open print dialog which allows saving as PDF
+                const printWindow = window.open('', '_blank');
+                printWindow.document.write(pdfContent);
+                printWindow.document.close();
+                
+                // Wait for content to load then trigger print
+                setTimeout(() => {
+                    printWindow.print();
+                }, 500);
+                
+                // Show confirmation
+                alert('PDF report generated. Use the print dialog to save as PDF.');
             });
             
+            // CSV Export
             document.getElementById('exportCsv').addEventListener('click', function() {
-                alert('CSV export functionality would generate a detailed spreadsheet of all compliance issues');
+                const storeName = document.getElementById('resultStoreName').textContent;
+                const storeUrl = document.getElementById('resultStoreUrl').textContent;
+                const ticketId = document.getElementById('resultTicketId').textContent;
+                
+                if (storeName === '-' || storeUrl === '-' || ticketId === '-') {
+                    alert('Please run an analysis first to generate a report.');
+                    return;
+                }
+                
+                // Create CSV content
+                const csvContent = [
+                    ['Shopify Compliance Analysis Report', '', '', ''],
+                    ['Store Name', 'Store URL', 'Ticket ID', 'Date'],
+                    [storeName, storeUrl, ticketId, new Date().toLocaleDateString()],
+                    [],
+                    ['Compliance Summary', '', '', ''],
+                    ['Overall Score', 'Critical Issues', 'Warnings', 'Total Issues'],
+                    ['39%', '11', '5', '16'],
+                    [],
+                    ['Detailed Issues', 'Severity', 'Risk Level', 'Description'],
+                    ['API License Violation - Unauthorized API Usage', 'Critical', 'High', 'Store accessing Shopify APIs without proper authorization'],
+                    ['API License Violation - Data Scraping Detected', 'Critical', 'High', 'Automated data extraction detected without proper credentials'],
+                    ['API License Violation - Third-Party Integration Violation', 'Critical', 'Medium', 'Unapproved integrations accessing restricted endpoints'],
+                    ['CSRF Compliance - Confidentiality Breach Risk', 'Critical', 'High', 'CSRF vulnerability allows unauthorized actions'],
+                    ['CSRF Compliance - Shopify ToS Violation', 'Critical', 'High', 'Violates Terms of Service Confidentiality clause'],
+                    ['CSRF Compliance - Data Protection Non-Compliance', 'Critical', 'High', 'Exposes sensitive data to potential extraction'],
+                    ['SPAV Compliance - Sales Permit Authorization Validation Failure', 'Critical', 'High', 'Checkout configuration misaligned with regional authorization framework'],
+                    ['SPAV Compliance - Checkout Stability Compromised', 'Critical', 'High', 'Inconsistent checkout calculations and payment failures'],
+                    ['SPAV Compliance - Region-Specific Authorization Issues', 'Critical', 'High', 'Sales configurations in unauthorized regions'],
+                    ['SPAV Compliance - Payment Authorization Instability', 'Critical', 'High', 'Increased abandoned checkout rates'],
+                    [],
+                    ['Compliant Areas', '', '', ''],
+                    ['Intellectual Property Infringement', 'Compliant', 'None', 'No issues found'],
+                    ['Incomplete HTTP Response Headers', 'Compliant', 'None', 'No issues found'],
+                    ['Missing Seller Permit', 'Compliant', 'None', 'No issues found']
+                ];
+                
+                // Convert to CSV string
+                const csvString = csvContent.map(row => 
+                    row.map(cell => `"${cell}"`).join(',')
+                ).join('\n');
+                
+                // Create download link
+                const blob = new Blob([csvString], { type: 'text/csv' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `compliance-report-${storeName.replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.csv`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                alert('CSV file downloaded successfully!');
             });
             
             // Re-analyze button
